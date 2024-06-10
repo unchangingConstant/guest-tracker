@@ -1,5 +1,4 @@
 #A file with sample code for the sqlite3 module for my reference
-
 import sqlite3
 import os
 
