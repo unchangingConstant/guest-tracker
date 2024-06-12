@@ -1,24 +1,25 @@
 from PyQt5 import QtCore, QtGui
 from PyQt5 import QtWidgets
 
-#Creates a searchable comboBox that autocompletes your search
-class SearchBox(QtWidgets.QComboBox):
+#Creates a search bar that autocompletes your search
+
+class SearchBox(QtWidgets.QLineEdit):
     def __init__(self):
         super(SearchBox, self).__init__()
 
-        #sets up search functionalities
-        self.setEditable(True)
-        self.completer = QtWidgets.QCompleter(self)
-        self.completer.setCompletionMode(QtWidgets.QCompleter.UnfilteredPopupCompletion)
-        #This doesn't work as intended
-        #womp
-        self.completer.setFilterMode(QtCore.Qt.MatchContains)
-
-        #aesthetic stuff
-        self.setPlaceholderText("")
-        self.setCurrentIndex(-1)
-
+        #I don't know what this does
+        self.model = QtCore.QStringListModel()
+        
+        #Sets up completer
+        self.completer = QtWidgets.QCompleter()
+        #I don't know what this does
+        self.completer.setModel(self.model)
+        #Completer matches if string in list contains current types word
+        #It's also not case sensitive
+        self.completer.setFilterMode(QtCore.Qt.MatchFlag.MatchContains)
+        self.completer.setCaseSensitivity(False)
+        self.setCompleter(self.completer)
+    
+    #Sets searchable list of items
     def addItems(self, strList):
-        super(SearchBox, self).addItems(strList)
-        self.setPlaceholderText("")
-        self.setCurrentIndex(-1)
+        self.model.setStringList(strList)

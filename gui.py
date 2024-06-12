@@ -16,14 +16,18 @@ import customWidgets as custom
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
 
+        #All interactions with the Student database will be managed with this tool
+        #dbRef short for "Database Reference"
         self._dbRef = Database()
 
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(899, 541)
 
-        self.createLayOut()
-        self.createSearchBox()
+        self.initLayOut()
+        self.initSearchBox()
 
+        #Everything in this box was made in QtDesigner, I'm not sure what most of it does yet
+        #----------------------------------------------------------
         self.listView = QtWidgets.QListView(self.centralwidget)
         self.listView.setItemAlignment(QtCore.Qt.AlignLeading)
         self.listView.setObjectName("listView")
@@ -41,26 +45,31 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
+        #-----------------------------------------------------------
 
-    def createLayOut(self):
+    #Sets up gui layout
+    #I don't know what half of it does, I will write better comments once I do
+    def initLayOut(self):
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.centralwidget)
         self.verticalLayout_2.setObjectName("verticalLayout_2")
         self.verticalLayout = QtWidgets.QVBoxLayout()
         self.verticalLayout.setObjectName("verticalLayout")
-
-    def createSearchBox(self):
-        #SearchBox shtuff  
-        self.comboBox = custom.SearchBox()
-        self.comboBox.addItems(self._dbRef.fetchStudentStrings())
-        self.verticalLayout.addWidget(self.comboBox)
-
+    
+    #Creates search box
+    def initSearchBox(self):
+        self.searchBox = custom.SearchBox()
+        #Adds students from database into search box
+        self.searchBox.addItems(self._dbRef.fetchStudentStrings())
+        self.verticalLayout.addWidget(self.searchBox)
+    
+    #Method created by QtDesigner, not sure what it does yet
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
 
-
+#Runs application
 if __name__ == "__main__":
     import sys
     app = QtWidgets.QApplication(sys.argv)
