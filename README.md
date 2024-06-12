@@ -49,7 +49,10 @@ Once the first build is stable, I will include instructions on how to use it.
 ## Roadmap
 
 - [X] Add function to view/search students in database from <del>combobox</del> search bar
-- [ ] Add function to start and end a student visit, displaying the students' current in classroom in listView
+- [ ] Add function to start and end a student visit, displaying the students currently in classroom in listView
+  - [ ] Add history of students' attendance to SQL database
+  - [ ] Displays length of student's current visit
+  - [ ] Displays start time of student's current visit
 - [ ] Add function to add students to database via the GUI
 
 See the [open issues](https://github.com/unchangingConstant/guest-tracker/issues) for a full list of proposed features (and known issues).

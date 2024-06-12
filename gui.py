@@ -56,14 +56,14 @@ class Ui_MainWindow(object):
         self.verticalLayout_2.setObjectName("verticalLayout_2")
         self.verticalLayout = QtWidgets.QVBoxLayout()
         self.verticalLayout.setObjectName("verticalLayout")
-    
+
     #Creates search box
     def initSearchBox(self):
         self.searchBox = custom.SearchBox()
         #Adds students from database into search box
         self.searchBox.addItems(self._dbRef.fetchStudentStrings())
         self.verticalLayout.addWidget(self.searchBox)
-    
+
     #Method created by QtDesigner, not sure what it does yet
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
