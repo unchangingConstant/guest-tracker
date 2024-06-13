@@ -1,6 +1,7 @@
 #Handles all database operations
 import sqlite3
 import os
+from datetime import datetime
 
 #Sets current working directory to the "userdata" file in project's root directory
 abspath = os.path.abspath(__file__)
@@ -28,6 +29,11 @@ class Database():
 
         return studentStrings
     
+    #Adds a visit to the database using only visiting student's studentID and currentTime
+    def startVisit(self, studentID: int):
+        currentTime = str(datetime.now())
+        self._cursor.execute(f"INSERT INTO histories VALUES ({studentID}, {currentTime}, NULL, NULL)")
+
     #Method was added to connect to certain widget signals
     #Helps test anything related to the gui modifying database info
     '''

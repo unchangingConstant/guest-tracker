@@ -25,6 +25,7 @@ class Ui_MainWindow(object):
 
         self.initLayOut()
         self.initSearchBox()
+        self.initVisitButton()
 
         #Everything in this box was made in QtDesigner, I'm not sure what most of it does yet
         #----------------------------------------------------------
@@ -56,13 +57,25 @@ class Ui_MainWindow(object):
         self.verticalLayout_2.setObjectName("verticalLayout_2")
         self.verticalLayout = QtWidgets.QVBoxLayout()
         self.verticalLayout.setObjectName("verticalLayout")
+        self.searchBarLayout = QtWidgets.QHBoxLayout()
+        self.verticalLayout.addLayout(self.searchBarLayout)
 
     #Creates search box
     def initSearchBox(self):
         self.searchBox = custom.SearchBox()
         #Adds students from database into search box
         self.searchBox.addItems(self._dbRef.fetchStudentStrings())
-        self.verticalLayout.addWidget(self.searchBox)
+        self.searchBarLayout.addWidget(self.searchBox)
+    
+    #Allows user to add visit to database (WIP)
+    def initVisitButton(self):
+        self.visitButton = QtWidgets.QPushButton("Start Visit")
+        #self.visitButton.clicked.connect()
+        self.searchBarLayout.addWidget(self.visitButton)
+    
+    #Function to execute on click of visitButtom
+    def createVisit():
+        pass
 
     #Button that adds and deletes a student from the database 
     #Made to test if searchbar updates with database upon certain signals
