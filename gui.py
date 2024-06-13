@@ -64,6 +64,16 @@ class Ui_MainWindow(object):
         self.searchBox.addItems(self._dbRef.fetchStudentStrings())
         self.verticalLayout.addWidget(self.searchBox)
 
+    #Button that adds and deletes a student from the database 
+    #Made to test if searchbar updates with database upon certain signals
+    '''
+    def initTestButton(self):
+        self.button = QtWidgets.QPushButton()
+        self.button.setCheckable(True)
+        self.button.clicked.connect(self._dbRef.toggleDaddy)
+        self.verticalLayout.addWidget(self.button)
+    '''
+    
     #Method created by QtDesigner, not sure what it does yet
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
