@@ -22,17 +22,42 @@ class Database():
         self._cursor.execute("SELECT * FROM students")
         rawStudentInfo = self._cursor.fetchall()
         studentStrings = []
-        
+
         for student in rawStudentInfo:
             studentStr = f"{student[0]}: {student[1]} {student[2]}"
             studentStrings.append(studentStr)
 
         return studentStrings
-    
+
+    def getStudentName(self, studentID: int):
+        self._cursor.execute(f"SELECT firstName, lastName FROM students WHERE id = {studentID}")
+        name =  self._cursor.fetchone()
+        return name[0] + " " + name[1]
+
     #Adds a visit to the database using only visiting student's studentID and currentTime
     def startVisit(self, studentID: int):
+
+        self._cursor.execute(f"SELECT visiting FROM students WHERE id = {studentID}")
+        visiting = self._cursor.fetchone()[0]
+        print(visiting)
+
+        if visiting == 0:
+            currentTime = str(datetime.now())
+            self._cursor.execute(f'INSERT INTO histories VALUES ({studentID}, "{currentTime}", NULL, NULL)')
+            self._database.commit()
+            print("Visit made!")
+        else:
+            print("Already visiting!!!")
+
+    def endVisit(self, studentID: int):
         currentTime = str(datetime.now())
-        self._cursor.execute(f"INSERT INTO histories VALUES ({studentID}, {currentTime}, NULL, NULL)")
+        self._cursor.execute(f'UPDATE histories SET endTime = "{currentTime}" WHERE id = {studentID} AND endTime IS NULL')
+        self._database.commit()
+
+    def getOngoingVisits(self) -> list[tuple]:
+        self._cursor.execute("SELECT * FROM histories WHERE endTime IS NULL")
+        ongoingVisits = self._cursor.fetchall()
+        return ongoingVisits
 
     #Method was added to connect to certain widget signals
     #Helps test anything related to the gui modifying database info
