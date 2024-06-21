@@ -58,15 +58,3 @@ class Database():
         self._cursor.execute("SELECT * FROM histories WHERE endTime IS NULL")
         ongoingVisits = self._cursor.fetchall()
         return ongoingVisits
-
-    #Method was added to connect to certain widget signals
-    #Helps test anything related to the gui modifying database info
-    '''
-    def toggleDaddy(self, toggled: bool):
-        if toggled:
-            self._cursor.execute("INSERT INTO students VALUES (1005, 'Begley', 'Daddy')")
-            self._cursor.execute("COMMIT")
-        else:
-            self._cursor.execute("DELETE FROM students WHERE id = '1005'")
-            self._cursor.execute("COMMIT")
-    '''
