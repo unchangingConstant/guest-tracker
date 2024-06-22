@@ -1,6 +1,7 @@
 import sys
 import os
-from PyQt5 import QtCore, QtWidgets, QtSql
+from PyQt5 import QtCore, QtWidgets, QtSql, Qt
+import customWidgets as custom
 
 abspath = os.path.abspath(__file__) #   Takes current program path
 dirname = os.path.dirname(abspath)  #   Gets current folder where program is
@@ -12,12 +13,12 @@ class TestApp(QtWidgets.QWidget):
         super().__init__()
 
         self.layout = QtWidgets.QVBoxLayout()   #   Creates a layout
-        self.listLayout = QtWidgets.QHBoxLayout()   #Creates widget for two lists to display things at a time
-        self.layout.addLayout(self.listLayout)
+        self.listLayout = QtWidgets.QHBoxLayout()   #   Creates widget for two lists to display things at a time
+        self.layout.addLayout(self.listLayout)  #   Adds listLayout to central layout
         self.setLayout(self.layout)             #   Sets testApp layout
 
-        self.initModel()    #   Sets up SqlTableModel
-        self.initStudentNameView()   #   Sets up table that student names
+        self.initModel()
+        self.initSearchBox()
 
     def initModel(self):
         self.db = QtSql.QSqlDatabase().addDatabase("QSQLITE")  #   Opens a sort of "tool" to access the database(?)
@@ -25,6 +26,11 @@ class TestApp(QtWidgets.QWidget):
         self.model = QtSql.QSqlTableModel() #   SqlTableModel is automatically connected to the database opened with the code above???
         self.model.setTable("students") #   Sets model to table in the database we want to access
         self.model.select() #   Selects all data on table to be displayed
+
+    def initSearchBox(self):
+        self.searchBox = custom.SearchBox() #   Creates customSearchBox widget
+        self.searchBox.setModel(self.model) #   Sets the searchbox's completer's model
+        self.layout.addWidget(self.searchBox)   #   adds the widget to the layout
 
     def initTableView(self):
         self.tableView = QtWidgets.QTableView() #   This widget will display the info in the database
