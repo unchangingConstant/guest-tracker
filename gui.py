@@ -13,12 +13,13 @@ class TestApp(QtWidgets.QWidget):
         super().__init__()
 
         self.layout = QtWidgets.QVBoxLayout()   #   Creates a layout
-        self.listLayout = QtWidgets.QHBoxLayout()   #   Creates widget for two lists to display things at a time
-        self.layout.addLayout(self.listLayout)  #   Adds listLayout to central layout
         self.setLayout(self.layout)             #   Sets testApp layout
 
         self.initModel()
+
+        self.initSearchLayout()
         self.initSearchBox()
+        self.initVisitButton()
 
     def initModel(self):
         self.db = QtSql.QSqlDatabase().addDatabase("QSQLITE")  #   Opens a sort of "tool" to access the database(?)
@@ -27,13 +28,22 @@ class TestApp(QtWidgets.QWidget):
         self.model.setTable("students") #   Sets model to table in the database we want to access
         self.model.select() #   Selects all data on table to be displayed
 
+    def initSearchLayout(self): #   Creates layout for the visit button and search box
+        self.searchLayout = QtWidgets.QHBoxLayout()
+        self.layout.addLayout(self.searchLayout)
+
     def initSearchBox(self):
         self.sbProxyModel = custom.CombineColumnsProxyModel(1, 2)   #   Creates the proxy model the search box will use
         self.sbProxyModel.setSourceModel(self.model)    #   Sets the proxy model's source model
 
         self.searchBox = custom.SearchBox() #   Creates customSearchBox widget
         self.searchBox.setModel(self.sbProxyModel) #   Sets the searchbox's completer's model
-        self.layout.addWidget(self.searchBox)   #   adds the widget to the layout
+        self.searchLayout.addWidget(self.searchBox)   #   adds the widget to the designated search layout
+    
+    def initVisitButton(self):
+        self.visitButton = QtWidgets.QPushButton("Start Visit") #   Creates button with text
+        self.searchLayout.addWidget(self.visitButton)   #   Adds it to the right of the search box in the search layout
+        self.visitButton.clicked.connect(lambda: print("Hurray!"))
 
     def initTableView(self):
         self.tvProxyModel = custom.CombineColumnsProxyModel(1, 2)   #   Creates the proxy model the search box will use

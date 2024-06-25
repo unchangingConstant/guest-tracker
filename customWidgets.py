@@ -10,6 +10,8 @@ class SearchBox(QLineEdit): #   Creates a search bar that autocompletes your sea
         self.completer.setCaseSensitivity(False)    #   Completer is not case-sensitive
         self.completer.setCompletionMode(QtWidgets.QCompleter.CompletionMode.PopupCompletion)
 
+        self.completer.activated[QtCore.QModelIndex].connect(lambda x: print(x.row()))
+
         self.setCompleter(self.completer)   #   Searchbar's completer to self.completer
     
     def setModel(self, model: QtCore.QAbstractProxyModel):

@@ -1,0 +1,20 @@
+Implementing Start Visit Button Ideas:
+
+1) Connecting QCompleter.activated() to "store" the ID of the student in the start visit button
+    Then when the button is pressed, creates a visit with the ID.
+
+    So: 
+        QCompleters "Loads" ID into button
+        Button "Fires" it to make visit
+    
+    Issues:
+        QCompleter.activated[QModelIndex] only returns the index within the CompleterModel, not the sourceModel
+            Maybe create subclass of completer whose completerModel's index corresponds to the same item in sourceModel?
+
+    Cons:
+        ID would be contained in visit button. Prone to data synchonization issues.
+            Potential solution may to find a way for the button to fetch ID directly from LineEdit? Or perhaps
+            QCompleter stores its last completion somewhere.
+
+NOTE TO SELF:
+    See if github has framework to put these kinds of monologues somewhere
