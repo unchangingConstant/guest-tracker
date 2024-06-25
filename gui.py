@@ -28,13 +28,19 @@ class TestApp(QtWidgets.QWidget):
         self.model.select() #   Selects all data on table to be displayed
 
     def initSearchBox(self):
+        self.sbProxyModel = custom.CombineColumnsProxyModel(1, 2)   #   Creates the proxy model the search box will use
+        self.sbProxyModel.setSourceModel(self.model)    #   Sets the proxy model's source model
+
         self.searchBox = custom.SearchBox() #   Creates customSearchBox widget
-        self.searchBox.setModel(self.model) #   Sets the searchbox's completer's model
+        self.searchBox.setModel(self.sbProxyModel) #   Sets the searchbox's completer's model
         self.layout.addWidget(self.searchBox)   #   adds the widget to the layout
 
     def initTableView(self):
+        self.tvProxyModel = custom.CombineColumnsProxyModel(1, 2)   #   Creates the proxy model the search box will use
+        self.tvProxyModel.setSourceModel(self.model)    #   Sets the proxy model's source model
+
         self.tableView = QtWidgets.QTableView() #   This widget will display the info in the database
-        self.tableView.setModel(self.model) #   Sets the table's model to the database model (self.model in initModel())
+        self.tableView.setModel(self.tvProxyModel) #   Sets the table's model to the database model (self.model in initModel())
         self.layout.addWidget(self.tableView)   #   Adds tableView to layout
 
     def initStudentNameView(self):
