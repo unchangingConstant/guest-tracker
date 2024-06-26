@@ -12,38 +12,32 @@ class TestApp(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
 
-        self.layout = QtWidgets.QVBoxLayout()   #   Creates a layout
-        self.setLayout(self.layout)             #   Sets testApp layout
+        self.layout = QtWidgets.QVBoxLayout()
+        self.setLayout(self.layout) #   Sets testApp layout
 
-        self.initModel()
+        self.initModels()
+        self.initAddVisitsWidget()
+        self.initVisitsDisplay()
 
-        self.initSearchLayout()
-        self.initSearchBox()
-        self.initVisitButton()
+    def initAddVisitsWidget(self):  #   Read all the info you seek in customWidgets.AddVisitsWidget()
+        self.addVisitsWidget = custom.AddVisitsWidget(self.studentModel, self.visitModel)
+        self.layout.addLayout(self.addVisitsWidget)
 
-    def initModel(self):
-        self.db = QtSql.QSqlDatabase().addDatabase("QSQLITE")  #   Opens a sort of "tool" to access the database(?)
-        self.db.setDatabaseName("database.db")  #   Adds the database to be accessed
-        self.model = QtSql.QSqlTableModel() #   SqlTableModel is automatically connected to the database opened with the code above???
-        self.model.setTable("students") #   Sets model to table in the database we want to access
-        self.model.select() #   Selects all data on table to be displayed
+    def initVisitsDisplay(self):
+        self.visitsDisplay = custom.VisitsDisplay(self.visitModel)
+        self.layout.addWidget(self.visitsDisplay)
 
-    def initSearchLayout(self): #   Creates layout for the visit button and search box
-        self.searchLayout = QtWidgets.QHBoxLayout()
-        self.layout.addLayout(self.searchLayout)
+    def initModels(self):
+        self.studentDB = QtSql.QSqlDatabase().addDatabase("QSQLITE")  #   Opens a sort of "tool" to access the database(?)
+        self.studentDB.setDatabaseName("database.db")  #   Adds the database to be accessed
 
-    def initSearchBox(self):
-        self.sbProxyModel = custom.CombineColumnsProxyModel(1, 2)   #   Creates the proxy model the search box will use
-        self.sbProxyModel.setSourceModel(self.model)    #   Sets the proxy model's source model
+        self.studentModel = QtSql.QSqlTableModel() #   SqlTableModel is automatically connected to the database opened with the code above???
+        self.studentModel.setTable("students") #   Sets model to table in the database we want to access
+        self.studentModel.select() #   Selects all data on table to be displayed
 
-        self.searchBox = custom.SearchBox() #   Creates customSearchBox widget
-        self.searchBox.setModel(self.sbProxyModel) #   Sets the searchbox's completer's model
-        self.searchLayout.addWidget(self.searchBox)   #   adds the widget to the designated search layout
-    
-    def initVisitButton(self):
-        self.visitButton = QtWidgets.QPushButton("Start Visit") #   Creates button with text
-        self.searchLayout.addWidget(self.visitButton)   #   Adds it to the right of the search box in the search layout
-        self.visitButton.clicked.connect(lambda: print("Hurray!"))
+        self.visitModel = QtSql.QSqlTableModel()
+        self.visitModel.setTable("histories")
+        self.visitModel.select()
 
     def initTableView(self):
         self.tvProxyModel = custom.CombineColumnsProxyModel(1, 2)   #   Creates the proxy model the search box will use
