@@ -24,7 +24,7 @@ class TestApp(QtWidgets.QWidget):
         self.layout.addLayout(self.addVisitsWidget)
 
     def initVisitsDisplay(self):
-        self.visitsDisplay = custom.VisitsDisplay(self.visitModel)
+        self.visitsDisplay = custom.VisitsDisplay()
         self.layout.addWidget(self.visitsDisplay)
 
     def initModels(self):
@@ -40,7 +40,7 @@ class TestApp(QtWidgets.QWidget):
         self.visitModel.select()
 
     def initTableView(self):
-        self.tvProxyModel = custom.CombineColumnsProxyModel(1, 2)   #   Creates the proxy model the search box will use
+        self.tvProxyModel = custom.CombineColumnsProxyModel([1, 2])   #   Creates the proxy model the search box will use
         self.tvProxyModel.setSourceModel(self.model)    #   Sets the proxy model's source model
 
         self.tableView = QtWidgets.QTableView() #   This widget will display the info in the database

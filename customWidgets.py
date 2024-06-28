@@ -15,14 +15,12 @@ class AddVisitsWidget(QtWidgets.QHBoxLayout):
         self.studentModel = studentModel
         self.visitModel = visitModel
 
-        self.relateTable = QtSql.QSqlRelationalTableModel() #   Surprise tool that will help us at a later stage in dev
-
         self.__initProxyModel()
         self.__initSearchComboBox()
         self.__initVisitButton()
 
     def __initProxyModel(self):
-        self.sbProxyModel = CombineColumnsProxyModel(1, 2)   #   Creates the proxy model the search box will use
+        self.sbProxyModel = CombineColumnsProxyModel([1])   #   Creates the proxy model the search box will use
         self.sbProxyModel.setSourceModel(self.studentModel)    #   Sets the proxy model's source model
 
     def __initSearchComboBox(self):
@@ -62,21 +60,36 @@ class AddVisitsWidget(QtWidgets.QHBoxLayout):
         print("added?") #   Debug statement
 
 class VisitsDisplay(QtWidgets.QListView):   #   Made to display the names, startTimes, and durations of all student visits, will comment further when fleshed out more
-    def __init__(self, visitModel: QtSql.QSqlTableModel):
+    def __init__(self):
         super(VisitsDisplay, self).__init__()
 
-        self.setModel(visitModel)
+        self.histories = QtSql.QSqlRelationalTableModel() #   Surprise tool that will help us at a later stage in dev
+        self.histories.setTable("histories")
+        self.histories.setRelation(0, QtSql.QSqlRelation("students", "id", "student_name"))
+        self.histories.setFilter("endTime IS NULL")
+        self.histories.select()
+
+        self.setModel(self.histories)
         self.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+
+class ExcludeOnConditionProxyModel(QtCore.QSortFilterProxyModel):
+    def __init__(self, fieldName: str, exclusionQualifier: any, parent = None):
+        super.__init__(parent)
+    
+    def mapToSource(self, proxyIndex: QtCore.QModelIndex):  
+        return self.sourceModel().index(proxyIndex.row(), self.columnList[0])
+    
+    def mapFromSource(self, sourceIndex: QtCore.QModelIndex):  
+        return self.index(sourceIndex.row(), 0)
     
 
-class CombineColumnsProxyModel(QtCore.QAbstractProxyModel): #   Proxy model takes a table and returns another table with any 2 columns concatenated
-    def __init__(self, colIndexOne: int, colIndexTwo: int, parent = None):
+class CombineColumnsProxyModel(QtCore.QAbstractProxyModel): #   Proxy model takes a table and returns another table with any number of columns concatenated
+    def __init__(self, columnList: list[int], parent = None):
         super().__init__(parent)
-        self.columnOne = colIndexOne
-        self.columnTwo = colIndexTwo
+        self.columnList = columnList
 
     def mapToSource(self, proxyIndex: QtCore.QModelIndex):  #   Passes the proxy index and returns the source index "equivalent"
-        return self.sourceModel().index(proxyIndex.row(), self.columnOne)   #   All proxyIndices get mapped to the 1st source model column
+        return self.sourceModel().index(proxyIndex.row(), self.columnList[0])   #   All proxyIndices get mapped to the 1st source model column
 
     def mapFromSource(self, sourceIndex: QtCore.QModelIndex):   #   Same as mapToSource, but in reverse
         return self.index(sourceIndex.row(), 0) #   All sourceRows get mapped to the proxy's one existing column
@@ -89,7 +102,7 @@ class CombineColumnsProxyModel(QtCore.QAbstractProxyModel): #   Proxy model take
 
     def index(self, row: int, column: int, parent = QtCore.QModelIndex()):
         if self.hasIndex(row, column, parent):
-            return self.createIndex(row, column, self.sourceModel().index(row, self.columnOne)) #   I have no clue what index()'s third parameter does. Literally no clue
+            return self.createIndex(row, column, self.sourceModel().index(row, self.columnList[0])) #   I have no clue what index()'s third parameter does. Literally no clue
         return QtCore.QModelIndex() #   Apparently this is an invalid index, and it's supposed to be that way
 
     def data(self, index: QtCore.QModelIndex, role = QtCore.Qt.DisplayRole):
@@ -103,9 +116,11 @@ class CombineColumnsProxyModel(QtCore.QAbstractProxyModel): #   Proxy model take
         I spent 2 hours on this before consulting ChatGPT, which suggested I simply account for both like so:
         '''
         if role == QtCore.Qt.DisplayRole or role == QtCore.Qt.EditRole:
-            firstCol = self.sourceModel().data(self.sourceModel().index(index.row(), self.columnOne))
-            lastCol = self.sourceModel().data(self.sourceModel().index(index.row(), self.columnTwo))
-            return f"{firstCol} {lastCol}"
+            concatString = ""
+            for column in self.columnList:
+                concatString = f"{concatString} {self.sourceModel().data(self.sourceModel().index(index.row(), column))}"
+            
+            return concatString
         '''
         And it worked.
         It makes very little sense to me, why would it need to access the same data twice???
