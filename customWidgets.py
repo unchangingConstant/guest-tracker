@@ -5,7 +5,7 @@ class SBCompleter(QtWidgets.QCompleter):
     def __init__(self):
         super(SBCompleter, self).__init__()
 
-class AddVisitsWidget(QtWidgets.QHBoxLayout):
+class AddVisitsWidget(QtWidgets.QWidget):
     def __init__(self, studentModel: QtSql.QSqlTableModel, visitModel: QtSql.QSqlTableModel): 
         super(AddVisitsWidget, self).__init__()
 
@@ -14,6 +14,9 @@ class AddVisitsWidget(QtWidgets.QHBoxLayout):
         '''
         self.studentModel = studentModel
         self.visitModel = visitModel
+
+        self.layout = QtWidgets.QHBoxLayout()
+        self.setLayout(self.layout)
 
         self.__initProxyModel()
         self.__initSearchComboBox()
@@ -26,7 +29,7 @@ class AddVisitsWidget(QtWidgets.QHBoxLayout):
     def __initSearchComboBox(self):
         self.searchCombo = QtWidgets.QComboBox()    #   Creates the comboBox from which user will access student names
         self.searchCombo.setInsertPolicy(QtWidgets.QComboBox.InsertPolicy.NoInsert) #   Items in the combo box can't be editted
-        self.addWidget(self.searchCombo)    #   Adds widget to self
+        self.layout.addWidget(self.searchCombo)    #   Adds widget to layout
         self.searchCombo.setModel(self.sbProxyModel)    #   sets the comboBox's model to the proxy model for the SQL DB, which concatenates the first and last names of each students and returns them
         self.searchCombo.setCurrentIndex(-1)    #   When program starts, combo box will display placeholder text
 
@@ -44,8 +47,8 @@ class AddVisitsWidget(QtWidgets.QHBoxLayout):
     def __initVisitButton(self):    #   Click this button, and it initiates a visit tied to the currently selected student in the comboBox 
         self.visitButton = QtWidgets.QPushButton("Start Visit") #   Creates button with text
         self.visitButton.clicked.connect(self.addVisit) #   Connects the click of the button to the addVisit function
-        self.addWidget(self.visitButton)    #   Adds widget to layout
-    
+        self.layout.addWidget(self.visitButton)    #   Adds widget to layout
+
     def addVisit(self):
         '''
         Read below # comment before this:
@@ -57,7 +60,6 @@ class AddVisitsWidget(QtWidgets.QHBoxLayout):
         record.setValue("id", studentID)    #   This whole block should be self-explanatory
         record.setValue("startTime", "12:00 AM")
         self.visitModel.insertRecord(-1, record)    #   Adds at index -1 to append the record to end of table
-        print("added?") #   Debug statement
 
 class VisitsDisplay(QtWidgets.QListView):   #   Made to display the names, startTimes, and durations of all student visits, will comment further when fleshed out more
     def __init__(self):

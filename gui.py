@@ -21,23 +21,27 @@ class TestApp(QtWidgets.QWidget):
 
     def initAddVisitsWidget(self):  #   Read all the info you seek in customWidgets.AddVisitsWidget()
         self.addVisitsWidget = custom.AddVisitsWidget(self.studentModel, self.visitModel)
-        self.layout.addLayout(self.addVisitsWidget)
+        self.layout.addWidget(self.addVisitsWidget)
 
     def initVisitsDisplay(self):
         self.visitsDisplay = custom.VisitsDisplay()
         self.layout.addWidget(self.visitsDisplay)
+        self.visitModel.dataChanged.connect(lambda: self.visitsDisplay.histories.select())
 
     def initModels(self):
         self.studentDB = QtSql.QSqlDatabase().addDatabase("QSQLITE")  #   Opens a sort of "tool" to access the database(?)
         self.studentDB.setDatabaseName("database.db")  #   Adds the database to be accessed
 
         self.studentModel = QtSql.QSqlTableModel() #   SqlTableModel is automatically connected to the database opened with the code above???
+        self.studentModel.setEditStrategy(QtSql.QSqlTableModel.EditStrategy.OnFieldChange)
         self.studentModel.setTable("students") #   Sets model to table in the database we want to access
         self.studentModel.select() #   Selects all data on table to be displayed
 
         self.visitModel = QtSql.QSqlTableModel()
+        self.visitModel.setEditStrategy(QtSql.QSqlTableModel.EditStrategy.OnFieldChange)
         self.visitModel.setTable("histories")
         self.visitModel.select()
+
 
     def initTableView(self):
         self.tvProxyModel = custom.CombineColumnsProxyModel([1, 2])   #   Creates the proxy model the search box will use
