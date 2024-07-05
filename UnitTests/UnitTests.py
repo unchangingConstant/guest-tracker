@@ -9,7 +9,8 @@ sys.path.append(parent_dir)
 
 import customWidgets as Custom
 
-class TestFixtureModel(QtSql.QSqlQueryModel):
+class TestFixtureDB():
+    
     pass
 
 class UnitTest():
@@ -24,9 +25,9 @@ class UnitTest():
         #Resets the databases
         self.database = sqlite3.connect(os.path.join(dirname, "testDB.db"))
         self.cursor = self.database.cursor()
-        self.cursor.execute("DELETE FROM students;")
-        self.cursor.execute("DELETE FROM histories;")
-        self.database.commit()
+        #self.cursor.execute("DELETE FROM students;")
+        #self.cursor.execute("DELETE FROM histories;")
+        #self.database.commit()
 
         #########################################################################
 
@@ -49,4 +50,4 @@ class UnitTest():
         
 
 uTest = UnitTest()
-uTest.testDoesModelSyncOnSelect()
+uTest.testFixture1()

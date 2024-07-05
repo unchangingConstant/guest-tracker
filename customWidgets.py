@@ -18,19 +18,15 @@ class AddVisitsWidget(QtWidgets.QWidget):
         self.layout = QtWidgets.QHBoxLayout()
         self.setLayout(self.layout)
 
-        self.__initProxyModel()
         self.__initSearchComboBox()
         self.__initVisitButton()
-
-    def __initProxyModel(self):
-        self.sbProxyModel = CombineColumnsProxyModel([1])   #   Creates the proxy model the search box will use
-        self.sbProxyModel.setSourceModel(self.studentModel)    #   Sets the proxy model's source model
 
     def __initSearchComboBox(self):
         self.searchCombo = QtWidgets.QComboBox()    #   Creates the comboBox from which user will access student names
         self.searchCombo.setInsertPolicy(QtWidgets.QComboBox.InsertPolicy.NoInsert) #   Items in the combo box can't be editted
         self.layout.addWidget(self.searchCombo)    #   Adds widget to layout
-        self.searchCombo.setModel(self.sbProxyModel)    #   sets the comboBox's model to the proxy model for the SQL DB, which concatenates the first and last names of each students and returns them
+        self.searchCombo.setModel(self.studentModel)   #   sets the comboBox's model to the proxy model for the SQL DB, which concatenates the first and last names of each students and returns them
+        self.searchCombo.setModelColumn(1)
         self.searchCombo.setCurrentIndex(-1)    #   When program starts, combo box will display placeholder text
 
     """
@@ -59,19 +55,13 @@ class AddVisitsWidget(QtWidgets.QWidget):
 
         record.setValue("id", studentID)    #   This whole block should be self-explanatory
         record.setValue("startTime", "12:00 AM")
-        self.visitModel.insertRecord(-1, record)    #   Adds at index -1 to append the record to end of table
+        print(self.visitModel.insertRecord(-1, record))   #   Adds at index -1 to append the record to end of table
 
 class VisitsDisplay(QtWidgets.QListView):   #   Made to display the names, startTimes, and durations of all student visits, will comment further when fleshed out more
-    def __init__(self):
+    def __init__(self, visitingStudentsModel: QtSql.QSqlRelationalTableModel):
         super(VisitsDisplay, self).__init__()
 
-        self.histories = QtSql.QSqlRelationalTableModel() #   Surprise tool that will help us at a later stage in dev
-        self.histories.setTable("histories")
-        self.histories.setRelation(0, QtSql.QSqlRelation("students", "id", "student_name"))
-        self.histories.setFilter("endTime IS NULL")
-        self.histories.select()
-
-        self.setModel(self.histories)
+        self.setModel(visitingStudentsModel)
         self.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
 
 class ExcludeOnConditionProxyModel(QtCore.QSortFilterProxyModel):
@@ -83,7 +73,6 @@ class ExcludeOnConditionProxyModel(QtCore.QSortFilterProxyModel):
     
     def mapFromSource(self, sourceIndex: QtCore.QModelIndex):  
         return self.index(sourceIndex.row(), 0)
-    
 
 class CombineColumnsProxyModel(QtCore.QAbstractProxyModel): #   Proxy model takes a table and returns another table with any number of columns concatenated
     def __init__(self, columnList: list[int], parent = None):
