@@ -45,10 +45,6 @@ class TestApp(QtWidgets.QWidget):
         print(self.visitModel.editStrategy())
         print(self.visitingStudents.editStrategy())
 
-    def updateModel(self, table: QtCore.QAbstractTableModel):    #   Meant to be connected to dataChanged signal from tables. Submits all cached changes and selects all data from DB
-        table.submitAll()
-        table.select()
-
     def initAddVisitsWidget(self):  #   Read all the info you seek in customWidgets.AddVisitsWidget()
         self.addVisitsWidget = custom.AddVisitsWidget(self.studentModel, self.visitModel)
         self.layout.addWidget(self.addVisitsWidget)

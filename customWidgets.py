@@ -1,14 +1,9 @@
 from PyQt5 import QtGui, QtWidgets, QtCore, QtSql
 from PyQt5.QtWidgets import * 
 
-class SBCompleter(QtWidgets.QCompleter):
-    def __init__(self):
-        super(SBCompleter, self).__init__()
-
 class AddVisitsWidget(QtWidgets.QWidget):
     def __init__(self, studentModel: QtSql.QSqlTableModel, visitModel: QtSql.QSqlTableModel): 
         super(AddVisitsWidget, self).__init__()
-
         '''
         Something about storing the database models in the widget feels like bad practice. I don't know why.
         '''
@@ -25,20 +20,11 @@ class AddVisitsWidget(QtWidgets.QWidget):
         self.searchCombo = QtWidgets.QComboBox()    #   Creates the comboBox from which user will access student names
         self.searchCombo.setInsertPolicy(QtWidgets.QComboBox.InsertPolicy.NoInsert) #   Items in the combo box can't be editted
         self.layout.addWidget(self.searchCombo)    #   Adds widget to layout
-        self.searchCombo.setModel(self.studentModel)   #   sets the comboBox's model to the proxy model for the SQL DB, which concatenates the first and last names of each students and returns them
-        self.searchCombo.setModelColumn(1)
-        self.searchCombo.setCurrentIndex(-1)    #   When program starts, combo box will display placeholder text
 
-    """
-    Student search will be implemented at a later date
-    """
-    def __initCompleter(self):
-        self.completer = QCompleter()   #   Sets up completer
-        self.completer.setFilterMode(QtCore.Qt.MatchFlag.MatchContains) #   Completer will match based of if keyword is contained in string
-        self.completer.setCaseSensitivity(False)    #   Completer is not case-sensitive
-        self.completer.setCompletionMode(QtWidgets.QCompleter.CompletionMode.PopupCompletion)   #   Completions popup
-        self.completer.setModel(self.sbProxyModel)  #   Sets completer model to the proxy model
-        self.searchCombo.setCompleter(self.completer)   #   Searchbar's completer to self.completer
+        self.searchCombo.setCurrentIndex(-1)    #   When program starts, combo box will display placeholder text
+        self.comboProxyModel = CorrespondingUserRoleProxyModel(0, 1)
+        self.comboProxyModel.setSourceModel(self.studentModel)
+        self.searchCombo.setModel(self.comboProxyModel)
 
     def __initVisitButton(self):    #   Click this button, and it initiates a visit tied to the currently selected student in the comboBox 
         self.visitButton = QtWidgets.QPushButton("Start Visit") #   Creates button with text
@@ -46,11 +32,8 @@ class AddVisitsWidget(QtWidgets.QWidget):
         self.layout.addWidget(self.visitButton)    #   Adds widget to layout
 
     def addVisit(self):
-        '''
-        Read below # comment before this:
-        This is why I will not implement the completer yet. It is more important to me to get the addVisits feature up and running for now.
-        '''
-        studentID = self.studentModel.data(self.studentModel.index(self.searchCombo.currentIndex(), 0)) #   Fetches the ID of the selected student using their index within the comboBox
+
+        studentID = self.searchCombo.currentData() #   Assumes that QtCore.Qt.UserRole contains the StudentID
         record = self.visitModel.record()   #   creates an empty record object ready to be added to the histories table
 
         record.setValue("id", studentID)    #   This whole block should be self-explanatory
@@ -64,70 +47,60 @@ class VisitsDisplay(QtWidgets.QListView):   #   Made to display the names, start
         self.setModel(visitingStudentsModel)
         self.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
 
-class ExcludeOnConditionProxyModel(QtCore.QSortFilterProxyModel):
-    def __init__(self, fieldName: str, exclusionQualifier: any, parent = None):
-        super.__init__(parent)
+'''
+Made for user by comboBoxes
+When instantiating this proxy model, you pass two integers as arguments.
+The column from the sourceModel that you want to be the userRole, and the column that you want to be the displayRole
+    These two columns will be paired up accordingly in the comboBox
     
-    def mapToSource(self, proxyIndex: QtCore.QModelIndex):  
-        return self.sourceModel().index(proxyIndex.row(), self.columnList[0])
-    
-    def mapFromSource(self, sourceIndex: QtCore.QModelIndex):  
-        return self.index(sourceIndex.row(), 0)
+The comboBox will display items in the displayRole column
+When currentData() is called, it will return items in the userRole column
+'''
+class CorrespondingUserRoleProxyModel(QtCore.QAbstractProxyModel):
 
-class CombineColumnsProxyModel(QtCore.QAbstractProxyModel): #   Proxy model takes a table and returns another table with any number of columns concatenated
-    def __init__(self, columnList: list[int], parent = None):
+    def __init__(self, userRoleCol: int, displayRoleCol: int, parent = None):
         super().__init__(parent)
-        self.columnList = columnList
+        self.userRoleColumn = userRoleCol
+        self.displayRoleColumn = displayRoleCol
+    
+    def mapToSource(self, proxyIndex: QtCore.QModelIndex):
+        #   If the proxyIndex is 0 or 1, it returns either the userRole data or the displayRole data, respectively.
+        #   Otherwise, returns the userRole column
+        if (proxyIndex.column() == 0):
+            return self.sourceModel().index(proxyIndex.row(), self.userRoleColumn)
+        if (proxyIndex.column() == 1):
+            return self.sourceModel().index(proxyIndex.row(), self.displayRoleColumn)
+        else:
+            return self.sourceModel().index(proxyIndex.row(), 0)
 
-    def mapToSource(self, proxyIndex: QtCore.QModelIndex):  #   Passes the proxy index and returns the source index "equivalent"
-        return self.sourceModel().index(proxyIndex.row(), self.columnList[0])   #   All proxyIndices get mapped to the 1st source model column
+    def mapFromSource(self, sourceIndex: QtCore.QModelIndex): 
+        #   If the sourceIndex corresponds to the columns selected to be either userRole or displayRole, the proxy model will return the corresponding index
+        #   Otherwise, returns the userRole data
+        if (sourceIndex.column == self.userRoleColumn):
+            return self.index(sourceIndex.row(), 0)
+        if (sourceIndex.column == self.displayRoleColumn):
+            return self.index(sourceIndex.row(), 1)
+        else:
+            return self.index(sourceIndex.row(), 0)
+    
+    def rowCount(self, parent):
+        return self.sourceModel().rowCount(parent)  #   Row count is same as sourceModel's
 
-    def mapFromSource(self, sourceIndex: QtCore.QModelIndex):   #   Same as mapToSource, but in reverse
-        return self.index(sourceIndex.row(), 0) #   All sourceRows get mapped to the proxy's one existing column
-
-    def rowCount(self, parent): #   Wat does parent mean
-        return self.sourceModel().rowCount(parent)  #   Has just as many rows as the source
-
-    def columnCount(self, parent: QtCore.QModelIndex):   
-        return 1    #   Proxy only has one column: Strings of first and last names
+    def columnCount(self, parent: QtCore.QModelIndex):
+        return 2    #   This proxy model will only ever have two columns
 
     def index(self, row: int, column: int, parent = QtCore.QModelIndex()):
-        if self.hasIndex(row, column, parent):
-            return self.createIndex(row, column, self.sourceModel().index(row, self.columnList[0])) #   I have no clue what index()'s third parameter does. Literally no clue
+        if self.hasIndex(row, column, parent):  #   I'm also not sure how hasIndex works
+            return self.createIndex(row, column, self.sourceModel().index(row, column)) #   Again, I have no idea what this 3rd parameter is supposed to do
         return QtCore.QModelIndex() #   Apparently this is an invalid index, and it's supposed to be that way
 
     def data(self, index: QtCore.QModelIndex, role = QtCore.Qt.DisplayRole):
         if not index.isValid():
             return None
-        '''
-        Originally, I couldn't get this method to work.
-        If I only accounted for DisplayRole being passed the Completer wouldn't show anything
-        Through print statement debugging I found out QCompleter was passing EditRole to role
-        I accounted for only EditRole and it would just pull up a blank list
-        I spent 2 hours on this before consulting ChatGPT, which suggested I simply account for both like so:
-        '''
-        if role == QtCore.Qt.DisplayRole or role == QtCore.Qt.EditRole:
-            concatString = ""
-            for column in self.columnList:
-                concatString = f"{concatString} {self.sourceModel().data(self.sourceModel().index(index.row(), column))}"
-            
-            return concatString
-        '''
-        And it worked.
-        It makes very little sense to me, why would it need to access the same data twice???
-        '''
-        #   Future Ethan here!
-        #   Turns out, EditRole is the data used to do completions, DisplayRole is the data that's displayed!
-        #   (In fact, it says so explicitly in QCompleter's documentation, you donut!)
-        #   You're welcome, future Ethan out!
-        '''
-        (Because in my debugging I found it would pass both DisplayRole and EditRole for every index it accessed)
-        I have very little knowledge of how data() is accessed by widgets, and the docs don't seem to say anything about it
-        This has made debugging and learning about this module nigh impossible
-        But it works
-        So
-        If any soul is out there reading this and knows where I could find the info I seek, please do let me know.
-        '''
+        
+        if role == QtCore.Qt.DisplayRole or role == QtCore.Qt.EditRole: #   Returns the selected displayRole column is either DisplayRole or EditRole is called for
+            return self.sourceModel().data(self.sourceModel().index(index.row(), self.displayRoleColumn))
+        if role == QtCore.Qt.UserRole:  #   Returns the selected userRole column if UserRole is called for
+            return self.sourceModel().data(self.sourceModel().index(index.row(), self.userRoleColumn))
         return None
-        
-        
+    
