@@ -2,13 +2,8 @@ from PyQt5 import QtGui, QtWidgets, QtCore, QtSql
 from PyQt5.QtWidgets import * 
 
 class AddVisitsWidget(QtWidgets.QWidget):
-    def __init__(self, studentModel: QtSql.QSqlTableModel, visitModel: QtSql.QSqlTableModel): 
+    def __init__(self): 
         super(AddVisitsWidget, self).__init__()
-        '''
-        Something about storing the database models in the widget feels like bad practice. I don't know why.
-        '''
-        self.studentModel = studentModel
-        self.visitModel = visitModel
 
         self.layout = QtWidgets.QHBoxLayout()
         self.setLayout(self.layout)
@@ -22,23 +17,21 @@ class AddVisitsWidget(QtWidgets.QWidget):
         self.layout.addWidget(self.searchCombo)    #   Adds widget to layout
 
         self.searchCombo.setCurrentIndex(-1)    #   When program starts, combo box will display placeholder text
-        self.comboProxyModel = CorrespondingUserRoleProxyModel(0, 1)
-        self.comboProxyModel.setSourceModel(self.studentModel)
-        self.searchCombo.setModel(self.comboProxyModel)
 
     def __initVisitButton(self):    #   Click this button, and it initiates a visit tied to the currently selected student in the comboBox 
         self.visitButton = QtWidgets.QPushButton("Start Visit") #   Creates button with text
-        self.visitButton.clicked.connect(self.addVisit) #   Connects the click of the button to the addVisit function
         self.layout.addWidget(self.visitButton)    #   Adds widget to layout
+    
+    def setComboBoxModel(self, model: QtCore.QAbstractTableModel):  #Sets comboBox's model. Model is not tracked within widget, this is to compartmentalize model/view components
+        comboProxyModel = CorrespondingUserRoleProxyModel(0, 1)
+        comboProxyModel.setSourceModel(model)
+        self.searchCombo.setModel(comboProxyModel)
 
-    def addVisit(self):
-
-        studentID = self.searchCombo.currentData() #   Assumes that QtCore.Qt.UserRole contains the StudentID
-        record = self.visitModel.record()   #   creates an empty record object ready to be added to the histories table
-
-        record.setValue("id", studentID)    #   This whole block should be self-explanatory
-        record.setValue("startTime", "12:00 AM")
-        print(self.visitModel.insertRecord(-1, record))   #   Adds at index -1 to append the record to end of table
+    def connectToClickedSignal(self, function): #   Connects a function to the button within the widget. (As far as I know, the function you connect must be passed as a lambda function)
+        self.visitButton.clicked.connect(function)
+    
+    def getComboBoxData(self):  #   Fetches current selected data in comboBox, with role QtCore.Qt.UserRole (By default the comboBox returns data with that role but I want to specify)
+        return self.searchCombo.currentData()
 
 class VisitsDisplay(QtWidgets.QListView):   #   Made to display the names, startTimes, and durations of all student visits, will comment further when fleshed out more
     def __init__(self, visitingStudentsModel: QtSql.QSqlRelationalTableModel):
@@ -48,7 +41,7 @@ class VisitsDisplay(QtWidgets.QListView):   #   Made to display the names, start
         self.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
 
 '''
-Made for user by comboBoxes
+Made for use by comboBoxes
 When instantiating this proxy model, you pass two integers as arguments.
 The column from the sourceModel that you want to be the userRole, and the column that you want to be the displayRole
     These two columns will be paired up accordingly in the comboBox
@@ -102,5 +95,6 @@ class CorrespondingUserRoleProxyModel(QtCore.QAbstractProxyModel):
             return self.sourceModel().data(self.sourceModel().index(index.row(), self.displayRoleColumn))
         if role == QtCore.Qt.UserRole:  #   Returns the selected userRole column if UserRole is called for
             return self.sourceModel().data(self.sourceModel().index(index.row(), self.userRoleColumn))
+        
         return None
     
