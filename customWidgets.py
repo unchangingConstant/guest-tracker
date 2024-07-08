@@ -34,10 +34,8 @@ class AddVisitsWidget(QtWidgets.QWidget):
         return self.searchCombo.currentData()
 
 class VisitsDisplay(QtWidgets.QListView):   #   Made to display the names, startTimes, and durations of all student visits, will comment further when fleshed out more
-    def __init__(self, visitingStudentsModel: QtSql.QSqlRelationalTableModel):
+    def __init__(self):
         super(VisitsDisplay, self).__init__()
-
-        self.setModel(visitingStudentsModel)
         self.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
 
 '''
@@ -97,4 +95,19 @@ class CorrespondingUserRoleProxyModel(QtCore.QAbstractProxyModel):
             return self.sourceModel().data(self.sourceModel().index(index.row(), self.userRoleColumn))
         
         return None
+    
+class WidgetPerItemListView(QtWidgets.QListView):    #   A list view that keeps widgets for each item
+
+    def __init__(self):
+        super(WidgetPerItemListView).__init__()
+    
+    def addWidget(self, position: int):    #   Allows you to add a widget to be added next to each item on the view
+        pass
+
+    def __renderWidgets(self):   #   This function will add all stored widgets per item
+        pass
+
+
+    
+
     

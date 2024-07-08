@@ -38,6 +38,7 @@ class TestApp(QtWidgets.QWidget):
         Hence, the line below.
 
         Given this, I'd also like to create a custom database structure so that I don't have to manually implement these updates.
+        Additionally, functions like addVisit should ideally be comparmentalized with model components.
         Though, at this point it seems unessential. So, I'll save it for a later date.
         """
         self.visitModel.dataChanged.connect(lambda: self.visitingStudents.select())
@@ -56,9 +57,10 @@ class TestApp(QtWidgets.QWidget):
         self.addVisitsWidget.connectToClickedSignal(lambda: self.addVisit())
 
     def __initVisitsDisplay(self):
-        self.visitsDisplay = custom.VisitsDisplay(self.visitingStudents)
+        self.visitsDisplay = custom.VisitsDisplay()
+        self.visitsDisplay.setModel(self.visitingStudents)
         self.layout.addWidget(self.visitsDisplay)
-    
+
     def addVisit(self):
         studentID = self.addVisitsWidget.getComboBoxData() #   Assumes that QtCore.Qt.UserRole contains the StudentID
         record = self.visitModel.record()   #   creates an empty record object ready to be added to the histories table
