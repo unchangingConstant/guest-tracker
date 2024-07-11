@@ -97,15 +97,24 @@ class CorrespondingUserRoleProxyModel(QtCore.QAbstractProxyModel):
         return None
     
 class WidgetPerItemListView(QtWidgets.QListView):    #   A list view that keeps widgets for each item
-
     def __init__(self):
-        super(WidgetPerItemListView).__init__()
+        super(WidgetPerItemListView, self).__init__()
+        self.widgetPerItem = []
     
-    def addWidget(self, position: int):    #   Allows you to add a widget to be added next to each item on the view
-        pass
+    def addWidget(self, widget: QtWidgets.QWidget, position: int):    #   Allows you to add a widget to be added next to each item on the view
+        self.widgetPerItem.insert(position, widget)
+        self.__updateWidgets()
 
-    def __renderWidgets(self):   #   This function will add all stored widgets per item
-        pass
+    def __updateWidgets(self):   #   This function will add all stored widgets per item
+
+        for i in range(self.model().rowCount()):
+            for widget in self.widgetPerItem:
+                self.setIndexWidget(self.model().index(i, 0), widget())
+    
+    def setModel(self, model: QtCore.QAbstractItemModel):
+        super().setModel(model)
+        model.dataChanged.connect(lambda: self.__updateWidgets())
+
 
 
     
