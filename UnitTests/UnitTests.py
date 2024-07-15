@@ -21,11 +21,9 @@ class UnitTest():
         #Resets the databases
         self.database = sqlite3.connect(os.path.join(dirname, "testDB.db"))
         self.cursor = self.database.cursor()
-        #self.cursor.execute("DELETE FROM students;")
-        #self.cursor.execute("DELETE FROM histories;")
-        #self.database.commit()
-
-        #########################################################################
+        self.cursor.execute("DELETE FROM students;")
+        self.cursor.execute("DELETE FROM histories;")
+        self.database.commit()
 
         self.studentDB = QtSql.QSqlDatabase().addDatabase("QSQLITE")  
         self.studentDB.setDatabaseName(os.path.join(dirname, "testDB.db"))  
@@ -40,6 +38,14 @@ class UnitTest():
     
     def testFixture(self):
         self.app = QtWidgets.QApplication([])
+    
+    def buttonedListViewFixture(self):
+        self.model = QtCore.QStringListModel()
+        self.list = ["boogers", "peepee", "poopoo"]
+        self.model.setStringList(self.list)
+
+        self.testWidget = Custom.ButtonedListView()
+        self.testWidget.setModel(self.model)
 
     def startWidget(self, widget: QtWidgets.QWidget):
         if __name__ == "__main__":
@@ -48,38 +54,68 @@ class UnitTest():
             window.show()
             sys.exit(self.app.exec())
 
-    def testWidgetPerItemListView1(self):   #   Tests that the widget will simply start
+    def testButtonedListView1(self):   #   Tests that the widget will render button in lists
         self.testFixture()
+        self.buttonedListViewFixture()
 
-        model = QtCore.QStringListModel()
-        list = ["boogers", "peepee", "poopoo"]
-        model.setStringList(list)
-
-        testWidget = Custom.WidgetPerItemListView()
-        testWidget.setModel(model)
-
-        self.startWidget(testWidget)
+        self.startWidget(self.testWidget)
     
-    def testWidgetPerItemListView2(self):   #   Tests that the widget will render widgets into list
+    def testButtonedListView2(self):   #    Tests that ButtonedListView will run set function upon press of button
         self.testFixture()
+        self.buttonedListViewFixture()
 
-        model = QtCore.QStringListModel()
-        list = ["boogers", "peepee", "poopoo"]
-        model.setStringList(list)
+        def testFunc(data):
+            print(f"{data}!")
+        
+        self.testWidget.setButtonFunction(testFunc)
 
-        testWidget = Custom.WidgetPerItemListView()
-        testWidget.setModel(model)
-
-        button = QtWidgets.QPushButton
-        testWidget.addWidget(button, 0)
-
-        self.startWidget(testWidget)
+        self.startWidget(self.testWidget)
     
-    def testWidgetPerItemListView3(self):    #   If __updateWidgets is called but no model is set, program doesn't kill itself
-        pass
+    def testButtonedListView3(self):    #   Tests that ButtonedListView's button function will have the specified data role passed to it
+        self.testFixture()
+        self.buttonedListViewFixture()
 
-    def testWidgetPerItemListView4(self):   #   Widgets are placed to the right of view data/items
+        def testFunc(data):
+            print(f"{data}!")
+
+        self.testWidget.setButtonFunction(testFunc)
+        self.testWidget.setButtonFunctionPassedDataRole(QtCore.Qt.DisplayRole)
+
+        self.startWidget(self.testWidget)
+
+    """
+    Test below still failing
+    """
+    def testButtonedListView4(self):   #   Tests that ButtonedListView will run function even if it takes no parameters
+        self.testFixture()
+        self.buttonedListViewFixture()
+
+        def testFunc():
+            print("Epic!")
+
+        self.testWidget.setButtonFunction(testFunc)
+        self.startWidget(self.testWidget)
+
+    def testButtonedListView5(self):    #   Test for when you're able to set the button text
+        self.testFixture()
+        self.buttonedListViewFixture()
+        
+        self.testWidget.setButtonText("Luna")
+        self.startWidget(self.testWidget)
+
+    def testButtonedListView6(self):    #   Tests that function still executes on button press when listView is set to no editTriggers
+        self.testFixture()
+        self.buttonedListViewFixture()
+        self.testWidget.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+
+        def testFunc(data):
+            print("Epic!")
+
+        self.testWidget.setButtonFunction(testFunc)
+        self.startWidget(self.testWidget)
+
+    def testDurationWidget(self):
         pass
 
 uTest = UnitTest()
-uTest.testWidgetPerItemListView2()
+uTest.testButtonedListView6()

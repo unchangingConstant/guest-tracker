@@ -1,5 +1,4 @@
 from PyQt5 import QtGui, QtWidgets, QtCore, QtSql
-from PyQt5.QtWidgets import * 
 
 class AddVisitsWidget(QtWidgets.QWidget):
     def __init__(self): 
@@ -47,7 +46,7 @@ The column from the sourceModel that you want to be the userRole, and the column
 The comboBox will display items in the displayRole column
 When currentData() is called, it will return items in the userRole column
 '''
-class CorrespondingUserRoleProxyModel(QtCore.QAbstractProxyModel):
+class CorrespondingUserRoleProxyModel(QtCore.QAbstractProxyModel):  #   Meant to map from table model into list-like model
 
     def __init__(self, userRoleCol: int, displayRoleCol: int, parent = None):
         super().__init__(parent)
@@ -89,34 +88,67 @@ class CorrespondingUserRoleProxyModel(QtCore.QAbstractProxyModel):
         if not index.isValid():
             return None
         
-        if role == QtCore.Qt.DisplayRole or role == QtCore.Qt.EditRole: #   Returns the selected displayRole column is either DisplayRole or EditRole is called for
+        if role == QtCore.Qt.DisplayRole: #   Returns the selected displayRole column is either DisplayRole or EditRole is called for
             return self.sourceModel().data(self.sourceModel().index(index.row(), self.displayRoleColumn))
         if role == QtCore.Qt.UserRole:  #   Returns the selected userRole column if UserRole is called for
             return self.sourceModel().data(self.sourceModel().index(index.row(), self.userRoleColumn))
         
         return None
-    
-class WidgetPerItemListView(QtWidgets.QListView):    #   A list view that keeps widgets for each item
+
+class ButtonedListView(QtWidgets.QListView):
     def __init__(self):
-        super(WidgetPerItemListView, self).__init__()
-        self.widgetPerItem = []
+        super(ButtonedListView, self).__init__()
+        self.setItemDelegate(ButtonedListView.ButtonedListDelegate())
+        self.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
     
-    def addWidget(self, widget: QtWidgets.QWidget, position: int):    #   Allows you to add a widget to be added next to each item on the view
-        self.widgetPerItem.insert(position, widget)
-        self.__updateWidgets()
+    def setButtonFunction(self, function):
+        self.itemDelegate().setButtonFunction(function)
 
-    def __updateWidgets(self):   #   This function will add all stored widgets per item
+    def setButtonFunctionPassedColumn(self, column: int):
+        self.itemDelegate().setButtonFunctionPassedColumn(column)
 
-        for i in range(self.model().rowCount()):
-            for widget in self.widgetPerItem:
-                self.setIndexWidget(self.model().index(i, 0), widget())
-    
-    def setModel(self, model: QtCore.QAbstractItemModel):
-        super().setModel(model)
-        model.dataChanged.connect(lambda: self.__updateWidgets())
+    def setButtonText(self, text: str):
+        self.itemDelegate().setButtonText(text)
 
+    class ButtonedListDelegate(QtWidgets.QStyledItemDelegate):  
+        def __init__(self):
+            super(ButtonedListView.ButtonedListDelegate, self).__init__()
+            self.buttonFunction = None
+            self.buttonFunctionDataRole = QtCore.Qt.DisplayRole
+            self.buttonText = ""
+        
+        def setButtonFunction(self, function):
+            self.buttonFunction = function
+        
+        def setButtonFunctionPassedDataRole(self, dataRole: QtCore.Qt.ItemDataRole):
+            self.buttonFunctionDataRole = dataRole
+        
+        def setButtonText(self, text):
+            self.buttonText = text
 
+        def paint(self, painter: QtGui.QPainter, option: QtWidgets.QStyleOptionViewItem, index: QtCore.QModelIndex):    #   Paint function paints the item from the model, gotcha
+            super().paint(painter, option, index)   #   Self-explanatory
 
-    
+            button_style = QtWidgets.QStyleOptionButton()   #   My guess is QStyleOption gives presets for painting things. In this case, a preset to paint a button. In the code that follows, we customize the "style option"
+            button_style.rect = option.rect.adjusted(option.rect.width() - 100, 0, 0, 0) #   We set the guidelines for how large the button is (what each individual function/parameter does/means, Idk)
+            button_style.text = self.buttonText  #   Text!   
+            button_style.state = QtWidgets.QStyle.State_Enabled #   This makes the button look convex. Comment this code and you'll see the difference, it's purely aesthetic
 
-    
+            QtWidgets.QApplication.style().drawControl(QtWidgets.QStyle.CE_PushButton, button_style, painter)   #   What
+        """
+        Explanation of editor event:
+        All mouse events are passed to editorEvent. It then decides whether it "starts" an editting event and acts accordingly.
+        For example:
+            Hovering your mouse over the QListView is passed to editorEvent, which subsequently highlights the item in listView
+        Basically a catch-all function for anything that happens that concerns the assigned view
+        Oh ChatGPT my lord and savior
+        """
+        def editorEvent(self, event: QtCore.QEvent, model: QtCore.QAbstractItemModel, option: QtWidgets.QStyleOptionViewItem, index: QtCore.QModelIndex): #   Function explained above
+            if event.type() == QtCore.QEvent.MouseButtonRelease:    #   From my understanding, MouseButtonRelease is the combined clicking and releasing of the button
+                if option.rect.adjusted(option.rect.width() - 100, 0, 0, 0).contains(event.pos()):   #   Checks that the event occured where the painted button is
+                    try:
+                        self.buttonFunction(model.data(index, self.buttonFunctionDataRole))
+                        return True
+                    except:
+                        print("Error with ButtonedListDelegate's buttonFunction")
+            return super().editorEvent(event, model, option, index)

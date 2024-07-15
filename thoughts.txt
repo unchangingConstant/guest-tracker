@@ -18,6 +18,3 @@ Implementing Start Visit Button Ideas:
 
 NOTE TO SELF:
     See if github has framework to put these kinds of monologues somewhere
-
-NOTE TO SELF:
-    IF you change an ID in the histories table, the students table's "visiting" field does not update accordingly. Write new triggers for db

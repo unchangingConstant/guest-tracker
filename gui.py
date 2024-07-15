@@ -40,6 +40,16 @@ class TestApp(QtWidgets.QWidget):
         Given this, I'd also like to create a custom database structure so that I don't have to manually implement these updates.
         Additionally, functions like addVisit should ideally be comparmentalized with model components.
         Though, at this point it seems unessential. So, I'll save it for a later date.
+
+        note TO FUTURE SELF: Consider delegating the below task to the View's QStyledItemDelegate. Look at this sample function to know what I'm talking about:
+
+        def editorEvent(self, event: QtCore.QEvent, model: QtCore.QAbstractItemModel, option: QtWidgets.QStyleOptionViewItem, index: QtCore.QModelIndex): 
+        if event.type() == QtCore.QEvent.MouseButtonRelease:    
+            if option.rect.adjusted(option.rect.width() - 80, 0, 0, 0).contains(event.pos()):   
+                model.removeRow(index.row())
+                model.select()
+                return True
+        return super().editorEvent(event, model, option, index)
         """
         self.visitModel.dataChanged.connect(lambda: self.visitingStudents.select())
 
@@ -54,15 +64,15 @@ class TestApp(QtWidgets.QWidget):
         self.addVisitsWidget = custom.AddVisitsWidget()
         self.layout.addWidget(self.addVisitsWidget)
         self.addVisitsWidget.setComboBoxModel(self.studentModel)
-        self.addVisitsWidget.connectToClickedSignal(lambda: self.addVisit())
+        self.addVisitsWidget.connectToClickedSignal(lambda: self.addVisit(self.addVisitsWidget.getComboBoxData()))
 
     def __initVisitsDisplay(self):
-        self.visitsDisplay = custom.VisitsDisplay()
+        self.visitsDisplay = custom.ButtonedListView()
+        self.visitsDisplay.setButtonText("End Visit")
         self.visitsDisplay.setModel(self.visitingStudents)
         self.layout.addWidget(self.visitsDisplay)
 
-    def addVisit(self):
-        studentID = self.addVisitsWidget.getComboBoxData() #   Assumes that QtCore.Qt.UserRole contains the StudentID
+    def addVisit(self, studentID: int): #   Takes studentID
         record = self.visitModel.record()   #   creates an empty record object ready to be added to the histories table
 
         record.setValue("id", studentID)    #   This whole block should be self-explanatory
