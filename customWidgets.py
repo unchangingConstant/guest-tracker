@@ -1,4 +1,5 @@
 from PyQt5 import QtGui, QtWidgets, QtCore, QtSql
+import datetime as dt
 
 class AddVisitsWidget(QtWidgets.QWidget):
     def __init__(self): 
@@ -48,8 +49,8 @@ When currentData() is called, it will return items in the userRole column
 '''
 class CorrespondingUserRoleProxyModel(QtCore.QAbstractProxyModel):  #   Meant to map from table model into list-like model
 
-    def __init__(self, userRoleCol: int, displayRoleCol: int, parent = None):
-        super().__init__(parent)
+    def __init__(self, userRoleCol: int, displayRoleCol: int):
+        super().__init__()
         self.userRoleColumn = userRoleCol
         self.displayRoleColumn = displayRoleCol
     
@@ -73,7 +74,7 @@ class CorrespondingUserRoleProxyModel(QtCore.QAbstractProxyModel):  #   Meant to
         else:
             return self.index(sourceIndex.row(), 0)
     
-    def rowCount(self, parent):
+    def rowCount(self, parent: QtCore.QModelIndex):
         return self.sourceModel().rowCount(parent)  #   Row count is same as sourceModel's
 
     def columnCount(self, parent: QtCore.QModelIndex):
@@ -95,34 +96,80 @@ class CorrespondingUserRoleProxyModel(QtCore.QAbstractProxyModel):  #   Meant to
         
         return None
 
-class ButtonedListView(QtWidgets.QListView):
-    def __init__(self):
-        super(ButtonedListView, self).__init__()
-        self.setItemDelegate(ButtonedListView.ButtonedListDelegate())
-        self.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+class ElapsedTimeProxyModel(QtCore.QAbstractProxyModel):
+    def __init__(self, startCol: int, displayCol: int):
+        super(ElapsedTimeProxyModel, self).__init__()
+        self.startTime = startCol
+        self.displayColumn = displayCol
+
+    def rowCount(self, parent: QtCore.QModelIndex):
+        return self.sourceModel().rowCount(parent) 
+
+    def columnCount(self, parent: QtCore.QModelIndex):
+        return self.sourceModel().columnCount(parent) 
+
+    def mapToSource(self, proxyIndex: QtCore.QModelIndex) -> QtCore.QModelIndex:
+        return self.sourceModel().index(proxyIndex.row(), proxyIndex.column())
+
+    def mapFromSource(self, sourceIndex: QtCore.QModelIndex) -> QtCore.QModelIndex:
+        return self.index(sourceIndex.row(), sourceIndex.column())
     
-    def setButtonFunction(self, function):
-        self.itemDelegate().setButtonFunction(function)
+    def index(self, row: int, column: int, parent = QtCore.QModelIndex()):
+        return self.sourceModel().index(row, column)
+
+    def data(self, index: QtCore.QModelIndex, role = QtCore.Qt.DisplayRole):
+        data = super().data(index, role)
+        if index.column() == self.displayColumn:
+            elapsedTime = self.__findElapsedTime(self.sourceModel.data(self.sourceModel.index(index.row(), self.startTime)))
+            return f"{elapsedTime}"
+        return data
+    
+    def __findElapsedTime(self, datetime: str) -> int: #   datetime needs to be in the format given by str(datetime.datetime) 
+        currentTime = dt.strptime(datetime)
+        timeElapsed = dt.now() - currentTime
+        return int(timeElapsed.total_seconds() / 60)
+
+class ButtonedTableView(QtWidgets.QTableView):
+    def __init__(self):
+        super(ButtonedTableView, self).__init__()
+        self.setItemDelegate(ButtonedTableView.ButtonedTableDelegate()) #   Sets the delegate to the custom one made solely for this widget
+        self.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+        self.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.ResizeMode.Stretch)  #   Table fills available width in layout
+    
+    def setButtonFunction(self, function):  #   Connects the button in the item delegate to a function. Note: self.itemDelegate().buttonFunctionPassColumn will be passed to the connected function
+        self.itemDelegate().setButtonFunction(function) #   Comments are fun!
 
     def setButtonFunctionPassedColumn(self, column: int):
         self.itemDelegate().setButtonFunctionPassedColumn(column)
+    
+    def setButtonColumn(self, column: int):
+        self.itemDelegate().setButtonColumn(column)
 
     def setButtonText(self, text: str):
         self.itemDelegate().setButtonText(text)
+    
+    def setModel(self, model: QtCore.QAbstractItemModel):
+        self.proxyModel = ElapsedTimeProxyModel(1, 2)
+        self.proxyModel.setSourceModel(model)
+        super().setModel(self.proxyModel)
 
-    class ButtonedListDelegate(QtWidgets.QStyledItemDelegate):  
+    class ButtonedTableDelegate(QtWidgets.QStyledItemDelegate):  #  I've nested the class since I don't foresee this class being useful under any other circumstance
         def __init__(self):
-            super(ButtonedListView.ButtonedListDelegate, self).__init__()
+            super(ButtonedTableView.ButtonedTableDelegate, self).__init__()
             self.buttonFunction = None
-            self.buttonFunctionDataRole = QtCore.Qt.DisplayRole
+            self.buttonFunctionCol = 0
+            self.buttonCol = 0
             self.buttonText = ""
         
         def setButtonFunction(self, function):
             self.buttonFunction = function
         
-        def setButtonFunctionPassedDataRole(self, dataRole: QtCore.Qt.ItemDataRole):
-            self.buttonFunctionDataRole = dataRole
-        
+        def setButtonFunctionPassedColumn(self, column: int):
+            self.buttonFunctionCol = column
+
+        def setButtonColumn(self, column: int):
+            self.buttonCol = column
+
         def setButtonText(self, text):
             self.buttonText = text
 
@@ -130,11 +177,12 @@ class ButtonedListView(QtWidgets.QListView):
             super().paint(painter, option, index)   #   Self-explanatory
 
             button_style = QtWidgets.QStyleOptionButton()   #   My guess is QStyleOption gives presets for painting things. In this case, a preset to paint a button. In the code that follows, we customize the "style option"
-            button_style.rect = option.rect.adjusted(option.rect.width() - 100, 0, 0, 0) #   We set the guidelines for how large the button is (what each individual function/parameter does/means, Idk)
+            button_style.rect = option.rect.adjusted(0, 0, 0, 0) #   We set the guidelines for how large the button is (what each individual function/parameter does/means, Idk)
             button_style.text = self.buttonText  #   Text!   
             button_style.state = QtWidgets.QStyle.State_Enabled #   This makes the button look convex. Comment this code and you'll see the difference, it's purely aesthetic
 
-            QtWidgets.QApplication.style().drawControl(QtWidgets.QStyle.CE_PushButton, button_style, painter)   #   What
+            if index.column() == self.buttonCol:
+                QtWidgets.QApplication.style().drawControl(QtWidgets.QStyle.CE_PushButton, button_style, painter)   #   What
         """
         Explanation of editor event:
         All mouse events are passed to editorEvent. It then decides whether it "starts" an editting event and acts accordingly.
@@ -145,7 +193,7 @@ class ButtonedListView(QtWidgets.QListView):
         """
         def editorEvent(self, event: QtCore.QEvent, model: QtCore.QAbstractItemModel, option: QtWidgets.QStyleOptionViewItem, index: QtCore.QModelIndex): #   Function explained above
             if event.type() == QtCore.QEvent.MouseButtonRelease:    #   From my understanding, MouseButtonRelease is the combined clicking and releasing of the button
-                if option.rect.adjusted(option.rect.width() - 100, 0, 0, 0).contains(event.pos()):   #   Checks that the event occured where the painted button is
+                if option.rect.adjusted(0, 0, 0, 0).contains(event.pos()):   #   Checks that the event occured where the painted button is
                     try:
                         self.buttonFunction(model.data(index, self.buttonFunctionDataRole))
                         return True

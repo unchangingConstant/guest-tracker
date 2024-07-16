@@ -2,6 +2,7 @@ import sys
 import os
 from PyQt5 import QtCore, QtWidgets, QtSql, Qt
 import customWidgets as custom
+import datetime as dt
 
 abspath = os.path.abspath(__file__) #   Takes current program path
 dirname = os.path.dirname(abspath)  #   Gets current folder where program is
@@ -67,16 +68,17 @@ class TestApp(QtWidgets.QWidget):
         self.addVisitsWidget.connectToClickedSignal(lambda: self.addVisit(self.addVisitsWidget.getComboBoxData()))
 
     def __initVisitsDisplay(self):
-        self.visitsDisplay = custom.ButtonedListView()
+        self.visitsDisplay = custom.ButtonedTableView()
         self.visitsDisplay.setButtonText("End Visit")
         self.visitsDisplay.setModel(self.visitingStudents)
+        self.visitsDisplay.setButtonColumn(3)
         self.layout.addWidget(self.visitsDisplay)
 
     def addVisit(self, studentID: int): #   Takes studentID
         record = self.visitModel.record()   #   creates an empty record object ready to be added to the histories table
 
         record.setValue("id", studentID)    #   This whole block should be self-explanatory
-        record.setValue("startTime", "12:00 AM")
+        record.setValue("startTime", f"{dt.datetime.now()}")
         print(self.visitModel.insertRecord(-1, record))   #   Adds at index -1 to append the record to end of table
 
 if __name__ == "__main__":
