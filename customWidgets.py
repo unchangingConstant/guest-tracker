@@ -102,10 +102,10 @@ class ElapsedTimeProxyModel(QtCore.QAbstractProxyModel):
         self.startTime = startCol
         self.displayColumn = displayCol
 
-    def rowCount(self, parent: QtCore.QModelIndex):
+    def rowCount(self, parent = QtCore.QModelIndex()):
         return self.sourceModel().rowCount(parent) 
 
-    def columnCount(self, parent: QtCore.QModelIndex):
+    def columnCount(self, parent = QtCore.QModelIndex()):
         return self.sourceModel().columnCount(parent) 
 
     def mapToSource(self, proxyIndex: QtCore.QModelIndex) -> QtCore.QModelIndex:
@@ -115,18 +115,20 @@ class ElapsedTimeProxyModel(QtCore.QAbstractProxyModel):
         return self.index(sourceIndex.row(), sourceIndex.column())
     
     def index(self, row: int, column: int, parent = QtCore.QModelIndex()):
-        return self.sourceModel().index(row, column)
+        if self.hasIndex(row, column, parent):  #   I'm not sure how hasIndex works
+            return self.createIndex(row, column)
+        return QtCore.QModelIndex() 
 
     def data(self, index: QtCore.QModelIndex, role = QtCore.Qt.DisplayRole):
         data = super().data(index, role)
         if index.column() == self.displayColumn:
-            elapsedTime = self.__findElapsedTime(self.sourceModel.data(self.sourceModel.index(index.row(), self.startTime)))
-            return f"{elapsedTime}"
+            elapsedTime = self.__findElapsedTime(self.sourceModel().data(self.sourceModel().index(index.row(), self.startTime)))
+            return elapsedTime
         return data
     
     def __findElapsedTime(self, datetime: str) -> int: #   datetime needs to be in the format given by str(datetime.datetime) 
-        currentTime = dt.strptime(datetime)
-        timeElapsed = dt.now() - currentTime
+        currentTime = dt.datetime.strptime(datetime, '%Y-%m-%d %H:%M:%S.%f')
+        timeElapsed = dt.datetime.now() - currentTime
         return int(timeElapsed.total_seconds() / 60)
 
 class ButtonedTableView(QtWidgets.QTableView):
@@ -147,7 +149,7 @@ class ButtonedTableView(QtWidgets.QTableView):
 
     def setButtonText(self, text: str):
         self.itemDelegate().setButtonText(text)
-    
+
     def setModel(self, model: QtCore.QAbstractItemModel):
         self.proxyModel = ElapsedTimeProxyModel(1, 2)
         self.proxyModel.setSourceModel(model)
@@ -174,15 +176,13 @@ class ButtonedTableView(QtWidgets.QTableView):
             self.buttonText = text
 
         def paint(self, painter: QtGui.QPainter, option: QtWidgets.QStyleOptionViewItem, index: QtCore.QModelIndex):    #   Paint function paints the item from the model, gotcha
-            super().paint(painter, option, index)   #   Self-explanatory
-
-            button_style = QtWidgets.QStyleOptionButton()   #   My guess is QStyleOption gives presets for painting things. In this case, a preset to paint a button. In the code that follows, we customize the "style option"
-            button_style.rect = option.rect.adjusted(0, 0, 0, 0) #   We set the guidelines for how large the button is (what each individual function/parameter does/means, Idk)
-            button_style.text = self.buttonText  #   Text!   
-            button_style.state = QtWidgets.QStyle.State_Enabled #   This makes the button look convex. Comment this code and you'll see the difference, it's purely aesthetic
-
-            if index.column() == self.buttonCol:
-                QtWidgets.QApplication.style().drawControl(QtWidgets.QStyle.CE_PushButton, button_style, painter)   #   What
+            if index.column() == index.model().columnCount() - 1:   #   If the item being drawn is at the specified index
+                button_style = QtWidgets.QStyleOptionButton()
+                button_style.rect = option.rect.adjusted(option.rect.width(), 0, 0, 0)
+                button_style.text = self.buttonText
+                QtWidgets.QApplication.style().drawControl(QtWidgets.QStyle.CE_PushButton, button_style, painter)
+            else:
+                super().paint(painter, option, index)
         """
         Explanation of editor event:
         All mouse events are passed to editorEvent. It then decides whether it "starts" an editting event and acts accordingly.
@@ -193,7 +193,7 @@ class ButtonedTableView(QtWidgets.QTableView):
         """
         def editorEvent(self, event: QtCore.QEvent, model: QtCore.QAbstractItemModel, option: QtWidgets.QStyleOptionViewItem, index: QtCore.QModelIndex): #   Function explained above
             if event.type() == QtCore.QEvent.MouseButtonRelease:    #   From my understanding, MouseButtonRelease is the combined clicking and releasing of the button
-                if option.rect.adjusted(0, 0, 0, 0).contains(event.pos()):   #   Checks that the event occured where the painted button is
+                if index.column() == self.buttonCol:   #   Checks that the event occured where the painted button is
                     try:
                         self.buttonFunction(model.data(index, self.buttonFunctionDataRole))
                         return True
