@@ -3,11 +3,9 @@ package dataviews;
 import java.awt.Button;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.Label;
 import java.awt.Panel;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import backend.Visit.VisitKey;
 import modelviewtools.DataDelegate;
 
 /**
@@ -20,7 +18,6 @@ public class OngoingVisit extends Panel {
 
     private EndButton endButton; // Button that ends the visit
     private DataDelegate model; // Database the button will access
-    private VisitKey visitKey;
 
     /**
      * These contraints will be used throughout the class to arrange the
@@ -37,23 +34,14 @@ public class OngoingVisit extends Panel {
      * @param model
      *            The data model this app is using to track visits
      */
-    public OngoingVisit(VisitKey visitKey, DataDelegate model) {
+    public OngoingVisit(DataDelegate model, int visitorID) {
         this.model = model;
-        this.visitKey = visitKey;
-        this.endButton = new EndButton(visitKey, model);
+        this.endButton = new EndButton(model);
 
         setLayout(new GridBagLayout());
 
-        add(new Label(model.visitorName(visitKey.visitorID())
-            + "is currently visiting"));
-
         add(endButton);
 
-    }
-
-
-    public VisitKey visitKey() {
-        return visitKey;
     }
 
     /**
@@ -62,7 +50,6 @@ public class OngoingVisit extends Panel {
     @SuppressWarnings("serial")
     private class EndButton extends Button implements ActionListener {
 
-        private VisitKey visitKey; // Visit key of the visit this button can end
         private DataDelegate model; // Data model the app is current using
 
         /**
@@ -71,7 +58,7 @@ public class OngoingVisit extends Panel {
          * @param visitKey
          *            Key of the visit you want this button to be able to end
          */
-        public EndButton(VisitKey visitKey, DataDelegate model) {
+        public EndButton(DataDelegate model) {
             super("End");
             addActionListener(this);
         }
@@ -82,12 +69,7 @@ public class OngoingVisit extends Panel {
          * student specified by visitorID()
          */
         public void actionPerformed(ActionEvent e) {
-            try {
-                model.endVisit(visitKey.visitorID());
-            }
-            catch (Exception e1) {
-                System.exit(0);
-            }
+
         }
 
     }

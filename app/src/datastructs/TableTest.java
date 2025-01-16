@@ -9,44 +9,132 @@ import java.util.NoSuchElementException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+/**
+ * Tests all functions for the table class
+ */
 class TableTest {
 
     private Table table;
 
+    private String[] validColumnNames;
+    private Comparator<Object[]> comparator;
+
     @BeforeEach
     void setUp() {
-        // Setting up a table with column names and default comparator
-        Comparator<Object[]> comparator = Comparator.comparingInt(
-            row -> (int)row[0]);
-        table = new Table(new String[] { "ID", "Name", "Age" }, comparator);
-
-        table.add(new Object[] { 1, "Ngoc", 25 });
-        table.add(new Object[] { 3, "Doug", 35 });
-        table.add(new Object[] { 2, "Ethan", 30 });
+        validColumnNames = new String[] { "ID", "Name" };
+        comparator = Comparator.comparingInt(o -> (int)o[0]);
     }
 
 
     /**
-     * Tests that entries are sorted according to comparator passed on
-     * instantiation.
-     * 
-     * - Case where comparator is passed into constructor.
+     * FOLLOWING METHODS TEST CONSTRUCTOR
+     */
+
+    /**
+     * - Case where comparator is passed (Ensure table is sorted correctly even
+     * if objects are added out of order)
      */
     @Test
-    void testComparatorConstructor() {
-        assertEquals(table.row(0)[0], 1);
-        assertEquals(table.row(1)[0], 2);
-        assertEquals(table.row(2)[0], 3);
+    void testConstructorWithComparator() {
+        Table tableWithComparator = new Table(validColumnNames, comparator);
+        tableWithComparator.add(new Object[] { 3, "Charlie" });
+        tableWithComparator.add(new Object[] { 1, "Alice" });
+        tableWithComparator.add(new Object[] { 2, "Bob" });
+
+        assertEquals(1, tableWithComparator.row(0)[0]);
+        assertEquals(2, tableWithComparator.row(1)[0]);
+        assertEquals(3, tableWithComparator.row(2)[0]);
     }
 
 
     /**
-     * Tests that row() returns a proper deep copy of the array (Though the
-     * elements in the array itself are shallow copies). We will call row(),
-     * change on of the elements in the array, and check that nothing has
-     * changed in the table.
+     * - Case where String array is empty (Throw IllegalArgumentException)
+     */
+    @Test
+    void testConstructorWithEmptyColumnNames() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            new Table(new String[] {});
+        });
+    }
+
+
+    /**
+     * - Case where String array is null (Throw NullPointerException)
+     */
+    @Test
+    void testConstructorWithNullColumnNames() {
+        assertThrows(NullPointerException.class, () -> {
+            new Table(null);
+        });
+    }
+
+
+    /**
+     * - Case where comparator is null (Initialize normal, unsorted table)
+     */
+    @Test
+    void testConstructorWithNullComparator() {
+        Table unsortedTable = new Table(validColumnNames, null);
+        unsortedTable.add(new Object[] { 3, "Charlie" });
+        unsortedTable.add(new Object[] { 1, "Alice" });
+        unsortedTable.add(new Object[] { 2, "Bob" });
+
+        assertEquals(3, unsortedTable.row(0)[0]); // No sorting
+        assertEquals(1, unsortedTable.row(1)[0]);
+        assertEquals(2, unsortedTable.row(2)[0]);
+    }
+
+
+    /**
+     * - Case where there are duplicate column names (Throw
+     * IllegalArgumentException)
+     */
+    @Test
+    void testConstructorWithDuplicateColumnNames() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            new Table(new String[] { "ID", "Name", "ID" });
+        });
+    }
+
+
+    /**
+     * - Case where an empty column name is used (Initialize with empty column
+     * name normally)
+     */
+    @Test
+    void testConstructorWithEmptyColumnName() {
+        Table emptyColumnNameTable = new Table(new String[] { "", "Name" });
+        assertEquals("", emptyColumnNameTable.columnNames()[0]);
+        assertEquals("Name", emptyColumnNameTable.columnNames()[1]);
+    }
+
+
+    /**
+     * - Case where String array used to initialize table is changed afterward
+     * (Ensure changes to this array doesn't reflect in table)
+     */
+    @Test
+    void testConstructorIndependenceFromInputArray() {
+        String[] columnNames = new String[] { "ID", "Name" };
+        Table independentTable = new Table(columnNames);
+        columnNames[0] = "Modified"; // Change the original array
+
+        assertEquals("ID", independentTable.columnNames()[0]); // Ensure table
+                                                               // is unaffected
+    }
+
+
+    /**
+     * Tests row()
      * 
-     * - Case where test row is index 0
+     * - Case where you retrieve first row
+     * - Case where you retrieve middle row
+     * - Case where you retrieve last row
+     * - Case where index above bounds
+     * - Case where index below bounds
+     * - Case where table is empty
+     * - Case where row is changed after it's called (Ensure no changes are made
+     * in the table after this operation)
      */
     @Test
     void testRowDeepCopy() {
@@ -62,12 +150,51 @@ class TableTest {
 
 
     /**
-     * Tests that entriesWhere fetch the correct entries for given column and
-     * value.
+     * Tests column()
      * 
-     * - Case where method is called with column index
-     * - Case where method is called with column name
-     * - Case where invalid column name is passed
+     * - Case where there is a single column
+     * - Case where a middle column is called
+     * - Case where the last column is called
+     * - Case where index above bounds
+     * - Case where index below bounds
+     * - Case where column name doesn't exist
+     * - Case where column name is null
+     * - Case where table is empty
+     * - Case where changes are made to retrieved column (Ensure this doesn't
+     * affect the table)
+     */
+    @Test
+    void testColumn() {
+        Object[] expectedIDs = new Object[] { 1, 2, 3 };
+        Object[] expectedNames = new Object[] { "Ngoc", "Ethan", "Doug" };
+        // Called by index case
+        assertArrayEquals(table.column(0), expectedIDs);
+        // Called by name case
+        assertArrayEquals(table.column("Name"), expectedNames);
+        // Called by invalid name case
+        assertThrows(NoSuchElementException.class, () -> table.column(
+            "Sucks to suck"));
+    }
+
+
+    /**
+     * Tests entriesWhere()
+     * 
+     * - Case where single condition is used to retrive rows
+     * - Case where multiple conditions are used to retrieve rows
+     * - Case where table is empty
+     * - Case where column index is above bounds
+     * - Case where column index is below bounds
+     * - Case where column name doesn't exist
+     * - Case where column name is null
+     * - Case where no row satify the condition
+     * - Case where rows satisfy some of the criteria
+     * - Case where primitive type is compared to non-primitive
+     * - Case where column array is empty
+     * - Case where value array is empty
+     * - Case where passed arrays are of unequal size
+     * - Case where returned table is modified (Ensure this doesn't affect
+     * original table)
      */
     @Test
     void testEntriesWhere() {

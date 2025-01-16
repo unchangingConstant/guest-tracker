@@ -16,7 +16,7 @@ public class VisitorTable extends Table {
      */
     public VisitorTable() {
         super(new String[] { "visitorID", "firstName", "middleName",
-            "lastName" });
+            "lastName" }, new CompareVisitors());
     }
 
 
@@ -27,7 +27,25 @@ public class VisitorTable extends Table {
      * @param visitorID
      */
     public void add(String[] fullName, int visitorID) {
+        if (fullName.length != 3) {
+            throw new IllegalArgumentException(
+                "String arr fullName must have length == 3");
+        }
+        if (visitorID < 10001) {
+            throw new IllegalArgumentException(
+                "visitorID must be at least 10001");
+        }
 
+        for (Object currID : rows) {
+            if ((int)currID == visitorID) {
+                throw new IllegalStateException(
+                    "visitorID already exists in visitor table. Try "
+                        + generateVisitorID());
+            }
+        }
+
+        rows.add(new Object[] { visitorID, fullName[0], fullName[1],
+            fullName[2] });
     }
 
 
@@ -85,7 +103,7 @@ public class VisitorTable extends Table {
     /**
      * Comparator that will sort this visitor table.
      */
-    static class CompareVisits implements Comparator<Object[]> {
+    static class CompareVisitors implements Comparator<Object[]> {
 
         /**
          * Compares two visitors by studentID

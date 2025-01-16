@@ -7,8 +7,8 @@ import java.util.ArrayList;
 import backend.Visit;
 import backend.Visit.VisitKey;
 import backend.VisitTable;
-import backend.Visitor;
 import backend.VisitorTable;
+import dataviews.OngoingVisit;
 import modelviewtools.DataDelegate;
 
 public class DataManager extends DataDelegate {
@@ -39,19 +39,12 @@ public class DataManager extends DataDelegate {
      * 
      * @return
      */
-    public Visit[] getOngoingVisits() {
+    public OngoingVisit[] getOngoingVisits() {
 
-        ArrayList<Visit> ongoingVisits = new ArrayList<Visit>();
-        Visit currVisit;
-
-        for (Visitor visitor : table.toArray()) {
-            currVisit = ((Visit)visitor.field("history"));
-            if (currVisit.isOngoing()) {
-                ongoingVisits.add(currVisit);
-            }
-        }
-
-        return (Visit[])ongoingVisits.toArray();
+        ArrayList<OngoingVisit> ongoingVisits = new ArrayList<OngoingVisit>();
+        
+        for (Object[] visit: visits.entriesWhere(new String[] {"visitorID", } ))
+        
     }
 
 

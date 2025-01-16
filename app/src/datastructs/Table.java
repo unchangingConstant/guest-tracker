@@ -1,7 +1,9 @@
 package datastructs;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
@@ -10,18 +12,17 @@ import java.util.NoSuchElementException;
  * Table is ordered by first field by default
  * 
  * TODO check for dumb stuff
+ * TODO check that ALL methods have tests
+ * TODO Consider creating more scalable frame work for handling errors
  */
 public class Table implements Iterable<Object[]> {
 
     /**
-     * Name of each column. The order of the columnNames should correspond to
-     * that column's index.
-     * 
-     * Example: if field "name" can be called with field(0), then columnNames[0]
-     * should equal "name"
+     * Name of each column, stored in a HashSet. The Integer value of the
+     * columnNames should correspond to that column's index.
      */
-    protected String[] columnNames;
-    // Stores all rows
+    protected HashMap<String, Integer> columnNames;
+    // Stores all rows in sorted list (potentially)
     protected SortModeList<Object[]> rows;
 
     /**
@@ -30,10 +31,36 @@ public class Table implements Iterable<Object[]> {
      * 
      * @param columnNames
      *            The name of each column in order.
+     * @param comparator
+     *            The comparator you want the list to be sorted with
      */
     public Table(String[] columnNames, Comparator<Object[]> comparator) {
-        this.columnNames = columnNames;
+
+        // Makes sure columnNames isn't length 0
+        if (columnNames.length == 0) {
+            throw new IllegalArgumentException(
+                "columnNames cannot be length 0");
+        }
+
+        // Makes sure no columnName is null
+        for (String name : columnNames) {
+            if (name == null) {
+                throw new IllegalArgumentException(
+                    "null columnName not allowed");
+            }
+        }
+
         this.rows = new SortModeList<Object[]>(comparator);
+        this.columnNames = new HashMap<>();
+
+        for (int i = 0; i < columnNames.length; i++) {
+            if (this.columnNames.containsKey(columnNames[i])) {
+                throw new IllegalArgumentException(
+                    "columnName must be unique, no duplicates");
+            }
+            this.columnNames.put(columnNames[i], i);
+        }
+
     }
 
 
@@ -44,8 +71,7 @@ public class Table implements Iterable<Object[]> {
      *            The name of each column in order.
      */
     public Table(String[] columnNames) {
-        this.columnNames = columnNames;
-        this.rows = new SortModeList<Object[]>();
+        this(columnNames, null);
     }
 
 
@@ -72,6 +98,116 @@ public class Table implements Iterable<Object[]> {
 
 
     /**
+     * Fetches all values from a given column
+     * 
+     * @param column
+     *            The column whose values you want
+     * @return An array of all values from that column
+     */
+    public Object[] column(int column) {
+
+        ArrayList<Object> newColumn = new ArrayList<Object>();
+
+        for (Object[] currRow : this) {
+            newColumn.add(currRow[column]);
+        }
+
+        return newColumn.toArray();
+    }
+
+
+    /**
+     * Fetches all values from a given column
+     * 
+     * @param columnName
+     *            The column whose values you want
+     * @return An array of all values from that column
+     */
+    public Object[] column(String columnName) {
+        for (int col = 0; col < columnCount(); col++) {
+            if (columnName.equals(columnNames.get(col))) {
+                return column(col);
+            }
+        }
+        throw new NoSuchElementException("No column with that name exists");
+    }
+
+
+    /**
+     * A query-like method. Used to retrieve all rows where the given columns
+     * equal the given values. Works similar to this 'query':
+     * 
+     * FETCH ENTRIES WHERE
+     * - column1.equals(value1) &&
+     * - column2.equals(value2)
+     * - etc...
+     * 
+     * All overloads of this method rely on this method to make testing easier.
+     * 
+     * @param columns
+     *            The columns you want to check
+     * @param values
+     *            The values the columns have to equal
+     * @return All rows that meet the set conditions.
+     */
+    public Table entriesWhere(int[] columns, Object[] values) {
+
+        Table entriesWhere = new Table(columnNames.toArray(new String[0]));
+        boolean meetsConditions;
+
+        // Iterates through rows
+        for (Object[] row : this) {
+            meetsConditions = true;
+
+            // Iterates through specified columns
+            for (int col = 0; col < columns.length; col++) {
+                // Checks that a column meets the condition
+                if (!row[columns[col]].equals(values[col])) {
+                    // If not, breaks the loop and sets this to false
+                    meetsConditions = false;
+                    break;
+                }
+            }
+            // Result of inner loops decide if row gets returned
+            if (meetsConditions == true) {
+                entriesWhere.add(row);
+            }
+        }
+
+        return entriesWhere;
+
+    }
+
+
+    /**
+     * A query-like method. Used to retrieve all rows where the given columns
+     * equal the given values. Works similar to this 'query':
+     * 
+     * FETCH ENTRIES WHERE
+     * - column1.equals(value1) &&
+     * - column2.equals(value2)
+     * - etc...
+     * 
+     * @param colNames
+     *            The columns you want to check
+     * @param values
+     *            The values the columns have to equal
+     * @return All rows that meet the set conditions.
+     */
+    public Table entriesWhere(String[] colNames, Object[] values) {
+        int[] colIndices = new int[colNames.length];
+
+        // Creates colIndicies array with colNames array to pass to
+        // entriesWhere(int[], Object[])
+        for (int i = 0; i < colNames.length; i++) {
+            colIndices[i] = columnNameIndices.get(colNames[i]);
+        }
+
+        return entriesWhere(colIndices, values);
+    }
+
+
+    /**
      * A query-like method. Used to retrieve all rows where the given column
      * equals the given value. Works similar to this 'query':
      * 
@@ -84,18 +220,7 @@ public class Table implements Iterable<Object[]> {
      * @return All rows that meet the set condition.
      */
     public Table entriesWhere(int column, Object value) {
-
-        verifyColIndex(column);
-
-        Table entriesWhere = new Table(columnNames);
-
-        for (int i = 0; i < rows.size(); i++) {
-            if (rows.get(i)[column].equals(value)) {
-                entriesWhere.add(row(i));
-            }
-        }
-
-        return entriesWhere;
+        return entriesWhere(new int[] { column }, new Object[] { value });
     }
 
 
@@ -114,12 +239,8 @@ public class Table implements Iterable<Object[]> {
      *             If the columnName doesn't exist in the table
      */
     public Table entriesWhere(String columnName, Object value) {
-        for (int i = 0; i < columnCount(); i++) {
-            if (columnNames[i].equals(columnName)) {
-                return entriesWhere(i, value);
-            }
-        }
-        throw new NoSuchElementException("Column name doesn't exist");
+        return entriesWhere(new String[] { columnName }, new Object[] {
+            value });
     }
 
 
@@ -150,7 +271,7 @@ public class Table implements Iterable<Object[]> {
      */
     public Object valueAt(int row, String columnName) {
         for (int i = 0; i < columnCount(); i++) {
-            if (columnNames[i].equals(columnName)) {
+            if (columnNames.get(i).equals(columnName)) {
                 return valueAt(row, i);
             }
         }
@@ -216,7 +337,7 @@ public class Table implements Iterable<Object[]> {
      * @return The number of columns in the table
      */
     public int columnCount() {
-        return columnNames.length;
+        return columnNames.size();
     }
 
 
@@ -236,7 +357,7 @@ public class Table implements Iterable<Object[]> {
      * @return The name of each column in the table
      */
     public String[] columnNames() {
-        return columnNames;
+        return columnNames.keySet().toArray(new String[0]);
     }
 
 

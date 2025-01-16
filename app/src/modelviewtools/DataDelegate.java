@@ -36,8 +36,7 @@ public abstract class DataDelegate {
      * @param signal
      *            The Signal you want to send the models.
      */
-    @SuppressWarnings("unused")
-    private void signalDataViews(Signal signal) {
+    protected void signalDataViews(Signal signal) {
         for (DataView dataView : signalList) {
             dataView.signal(signal);
         }
