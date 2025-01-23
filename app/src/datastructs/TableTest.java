@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 class TableTest {
 
     private Table table;
+    private Table table1;
 
     private String[] validColumnNames;
     private Comparator<Object[]> comparator;
@@ -23,6 +24,8 @@ class TableTest {
     void setUp() {
         validColumnNames = new String[] { "ID", "Name" };
         comparator = Comparator.comparingInt(o -> (int)o[0]);
+
+        table1 = new Table(validColumnNames, comparator);
     }
 
 
@@ -125,20 +128,91 @@ class TableTest {
 
 
     /**
-     * Tests row()
-     * 
-     * - Case where you retrieve first row
-     * - Case where you retrieve middle row
-     * - Case where you retrieve last row
-     * - Case where index above bounds
-     * - Case where index below bounds
-     * - Case where table is empty
-     * - Case where row is changed after it's called (Ensure no changes are made
-     * in the table after this operation)
+     * Tests that adding to an empty table works normally
+     */
+    @Test
+    void testAddEmptyTable() {
+        table1.add(new Object[] { 1, "Ethan" });
+        assertArrayEquals(table1.row(0), new Object[] { 1, "Ethan" });
+    }
+
+
+    /**
+     * Tests that adding multiple rows in succession works normally.
+     */
+    @Test
+    void testAddMultiple() {
+        table1.add(new Object[] { 1, "Ethan" });
+        table1.add(new Object[] { 2, "Ngoc" });
+        table1.add(new Object[] { 3, "Doug" });
+        assertArrayEquals(table1.row(0), new Object[] { 1, "Ethan" });
+        assertArrayEquals(table1.row(1), new Object[] { 2, "Ngoc" });
+        assertArrayEquals(table1.row(2), new Object[] { 3, "Doug" });
+    }
+
+
+    /**
+     * Tests that add() adds the rows in sorted order.
+     */
+    @Test
+    void testAddSorted() {
+        table1.add(new Object[] { 3, "Doug" });
+        table1.add(new Object[] { 1, "Ethan" });
+        table1.add(new Object[] { 2, "Ngoc" });
+        assertArrayEquals(table1.row(0), new Object[] { 1, "Ethan" });
+        assertArrayEquals(table1.row(1), new Object[] { 2, "Ngoc" });
+        assertArrayEquals(table1.row(2), new Object[] { 3, "Doug" });
+    }
+
+
+    /**
+     * Tests that IllegalArgumentException is thrown when row with invalid
+     * column count is passed.
+     */
+    @Test
+    void testAddInvalidColCount() {
+        assertThrows(IllegalArgumentException.class, () -> table1.add(
+            new Object[0]));
+        assertThrows(IllegalArgumentException.class, () -> table1.add(
+            new Object[3]));
+    }
+
+
+    /**
+     * Tests that IllegalArgumentException is thrown if null row is added
+     */
+    @Test
+    void testAddNull() {
+        assertThrows(IllegalArgumentException.class, () -> table1.add(null));
+    }
+
+
+    /**
+     * Tests that rows with null columns are added normally
+     */
+    @Test
+    void testAddNullFields() {
+        table1.add(new Object[] { 1, null });
+        assertArrayEquals(table1.row(0), new Object[] { 1, null });
+    }
+
+
+    /**
+     * Tests that rows with duplicate columns are added normally
+     */
+    @Test
+    void testAddDuplicateFields() {
+        table1.add(new Object[] { 5, 5 });
+        assertArrayEquals(table1.row(0), new Object[] { 5, 5 });
+    }
+
+
+    /**
+     * Tests that row returns a deep copy array. (thought the objects in the
+     * array don't necessarily have to be deep copies)
      */
     @Test
     void testRowDeepCopy() {
-        // Case where index = 0
         Object[] copyRow = table.row(0);
         copyRow[0] = 4;
         // Checks that the table row remains unchanged even though the copy row
@@ -264,22 +338,5 @@ class TableTest {
         assertThrows(NoSuchElementException.class, () -> table.remove(
             new Object[] { 4, "Himothy", 86 }));
 
-    }
-
-
-    /**
-     * Tests add()
-     * 
-     * - Case where row doesn't meet column count requirements
-     * - Case where row meets columnCount requirements
-     */
-    @Test
-    void testAddRowValid() {
-        // Valid case
-        table.add(new Object[] { 4, "Daisy", 999 });
-        assertTrue(table.contains(new Object[] { 4, "Daisy", 999 }));
-        // Invalid case
-        assertThrows(IllegalArgumentException.class, () -> table.add(
-            new Object[] { "Invalid", "Row" }));
     }
 }

@@ -124,12 +124,7 @@ public class Table implements Iterable<Object[]> {
      * @return An array of all values from that column
      */
     public Object[] column(String columnName) {
-        for (int col = 0; col < columnCount(); col++) {
-            if (columnName.equals(columnNames.get(col))) {
-                return column(col);
-            }
-        }
-        throw new NoSuchElementException("No column with that name exists");
+        return column(columnNames.get(columnName));
     }
 
 
@@ -152,7 +147,8 @@ public class Table implements Iterable<Object[]> {
      */
     public Table entriesWhere(int[] columns, Object[] values) {
 
-        Table entriesWhere = new Table(columnNames.toArray(new String[0]));
+        Table entriesWhere = new Table(columnNames.keySet().toArray(
+            new String[0]));
         boolean meetsConditions;
 
         // Iterates through rows
@@ -200,7 +196,7 @@ public class Table implements Iterable<Object[]> {
         // Creates colIndicies array with colNames array to pass to
         // entriesWhere(int[], Object[])
         for (int i = 0; i < colNames.length; i++) {
-            colIndices[i] = columnNameIndices.get(colNames[i]);
+            colIndices[i] = columnNames.get(colNames[i]);
         }
 
         return entriesWhere(colIndices, values);
@@ -239,8 +235,7 @@ public class Table implements Iterable<Object[]> {
      *             If the columnName doesn't exist in the table
      */
     public Table entriesWhere(String columnName, Object value) {
-        return entriesWhere(new String[] { columnName }, new Object[] {
-            value });
+        return entriesWhere(columnNames.get(columnName), value);
     }
 
 
@@ -266,17 +261,9 @@ public class Table implements Iterable<Object[]> {
      * @param columnName
      *            The column where the data you want is
      * @return the value at the given row and column
-     * @throws NoSuchElementException
-     *             If the columnName doesn't exist in the table
      */
     public Object valueAt(int row, String columnName) {
-        for (int i = 0; i < columnCount(); i++) {
-            if (columnNames.get(i).equals(columnName)) {
-                return valueAt(row, i);
-            }
-        }
-
-        throw new NoSuchElementException("Column name doesn't exist");
+        return valueAt(row, columnNames.get(columnName));
     }
 
 
@@ -321,6 +308,9 @@ public class Table implements Iterable<Object[]> {
      *             If the row passed doesn't meet the requirements above
      */
     public void add(Object[] row) {
+        if (row == null) {
+            throw new IllegalArgumentException("Row cannot be null");
+        }
         if (row.length != columnCount()) {
             throw new IllegalArgumentException(
                 "Row columnCount and table columnCount differ. Row: "
