@@ -16,6 +16,7 @@ class TableTest {
 
     private Table table;
     private Table table1;
+    private Table table2;
 
     private String[] validColumnNames;
     private Comparator<Object[]> comparator;
@@ -26,6 +27,11 @@ class TableTest {
         comparator = Comparator.comparingInt(o -> (int)o[0]);
 
         table1 = new Table(validColumnNames, comparator);
+
+        table2 = new Table(validColumnNames, comparator);
+        table2.add(new Object[] { 1, "Ethan" });
+        table2.add(new Object[] { 2, "Ngoc" });
+        table2.add(new Object[] { 3, "Doug" });
     }
 
 
@@ -40,9 +46,9 @@ class TableTest {
     @Test
     void testConstructorWithComparator() {
         Table tableWithComparator = new Table(validColumnNames, comparator);
-        tableWithComparator.add(new Object[] { 3, "Charlie" });
-        tableWithComparator.add(new Object[] { 1, "Alice" });
-        tableWithComparator.add(new Object[] { 2, "Bob" });
+        tableWithComparator.add(new Object[] { 3, "Ngoc" });
+        tableWithComparator.add(new Object[] { 1, "Doug" });
+        tableWithComparator.add(new Object[] { 2, "Ethan" });
 
         assertEquals(1, tableWithComparator.row(0)[0]);
         assertEquals(2, tableWithComparator.row(1)[0]);
@@ -78,9 +84,9 @@ class TableTest {
     @Test
     void testConstructorWithNullComparator() {
         Table unsortedTable = new Table(validColumnNames, null);
-        unsortedTable.add(new Object[] { 3, "Charlie" });
-        unsortedTable.add(new Object[] { 1, "Alice" });
-        unsortedTable.add(new Object[] { 2, "Bob" });
+        unsortedTable.add(new Object[] { 3, "Ngoc" });
+        unsortedTable.add(new Object[] { 1, "Doug" });
+        unsortedTable.add(new Object[] { 2, "Ethan" });
 
         assertEquals(3, unsortedTable.row(0)[0]); // No sorting
         assertEquals(1, unsortedTable.row(1)[0]);
@@ -209,17 +215,42 @@ class TableTest {
 
     /**
      * Tests that row returns a deep copy array. (thought the objects in the
-     * array don't necessarily have to be deep copies)
+     * array don't necessarily have to be deep copies). This test also makes
+     * sure that cases index = 0 and index = Table.columnCount() - 1 works
+     * normally
      */
     @Test
     void testRowDeepCopy() {
-        Object[] copyRow = table.row(0);
+        Object[] copyRow = table2.row(0);
         copyRow[0] = 4;
         // Checks that the table row remains unchanged even though the copy row
         // is changed.
-        Object[] tableRow = table.row(0);
+        Object[] tableRow = table2.row(0);
         assertEquals(tableRow[0], 1);
 
+        tableRow = table2.row(2);
+        assertArrayEquals(tableRow, new Object[] { 3, "Doug" });
+
+    }
+
+
+    /**
+     * Makes sure that row() throws IndexOutOfBoundsException if requested index
+     * is, out of bounds.
+     */
+    @Test
+    void testRowIndexOutOfBounds() {
+        assertThrows(IndexOutOfBoundsException.class, () -> table2.row(-1));
+        assertThrows(IndexOutOfBoundsException.class, () -> table2.row(3));
+    }
+
+
+    /**
+     * Tests that row() method throws IndexOutOfBounds if used on empty table
+     */
+    @Test
+    void testRowEmptyTable() {
+        assertThrows(IndexOutOfBoundsException.class, () -> table1.row(0));
     }
 
 
