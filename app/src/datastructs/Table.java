@@ -137,7 +137,7 @@ public class Table implements Iterable<Object[]> {
      * - column2.equals(value2)
      * - etc...
      * 
-     * All overloads of this method rely on this method to make testing easier.
+     * All overloads of this method rely on this method.
      * 
      * @param columns
      *            The columns you want to check
@@ -147,25 +147,54 @@ public class Table implements Iterable<Object[]> {
      */
     public Table entriesWhere(int[] columns, Object[] values) {
 
+        if (columns.length != values.length) {
+            throw new IllegalArgumentException("Argument lengths to not match");
+        }
+
         Table entriesWhere = new Table(columnNames.keySet().toArray(
             new String[0]));
         boolean meetsConditions;
+        Object[] row;
+
+        // Ensures all columnIndices passed are valid
+        for (int i : columns) {
+            if (i >= columnCount() || i < 0) {
+                throw new IndexOutOfBoundsException(
+                    "One or more column indices passed are out of bounds for this table");
+            }
+        }
 
         // Iterates through rows
-        for (Object[] row : this) {
-            meetsConditions = true;
+        for (int i = 0; i < rowCount(); i++) {
+            row = row(i); // Ensures deep copies will be added to new table
 
-            // Iterates through specified columns
-            for (int col = 0; col < columns.length; col++) {
-                // Checks that a column meets the condition
-                if (!row[columns[col]].equals(values[col])) {
-                    // If not, breaks the loop and sets this to false
-                    meetsConditions = false;
+            // Assumes row doesn't meet conditions until proven otherwise
+            meetsConditions = false;
+
+            // Iterates through specified columns of row and checks conditions
+            for (int col = 0; col <= columns.length; col++) {
+
+                // if it has iterated through all the columns and the row hasn't
+                // been rejected, sets meetConditions to true and breaks the
+                // loop
+                if (col == columns.length) {
+                    meetsConditions = true;
                     break;
                 }
+                // Checks the current column. If the condition is met, continues
+                // to next column
+                if (row[columns[col]] == null && values[col] == null) {
+                    continue;
+                }
+                if (row[columns[col]].equals(values[col])) {
+                    continue;
+                }
+                // If neither condition is met, breaks loop
+                break;
             }
+
             // Result of inner loops decide if row gets returned
-            if (meetsConditions == true) {
+            if (meetsConditions) {
                 entriesWhere.add(row);
             }
         }
@@ -375,20 +404,6 @@ public class Table implements Iterable<Object[]> {
      */
     public Iterator<Object[]> iterator() {
         return rows.iterator();
-    }
-
-
-    /**
-     * Checks that a given integer is above 0 and below the table's column count
-     * 
-     * @param colIndex
-     *            Column index you want to check
-     */
-    private void verifyColIndex(int colIndex) {
-        if (colIndex < 0 || colIndex >= columnCount()) {
-            throw new IndexOutOfBoundsException(
-                "Column index is out of bounds");
-        }
     }
 
 }

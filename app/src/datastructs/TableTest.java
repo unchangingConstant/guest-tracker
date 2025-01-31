@@ -255,67 +255,248 @@ class TableTest {
 
 
     /**
-     * Tests column()
-     * 
-     * - Case where there is a single column
-     * - Case where a middle column is called
-     * - Case where the last column is called
-     * - Case where index above bounds
-     * - Case where index below bounds
-     * - Case where column name doesn't exist
-     * - Case where column name is null
-     * - Case where table is empty
-     * - Case where changes are made to retrieved column (Ensure this doesn't
-     * affect the table)
+     * Tests that column(int) returns the specified column of values
      */
     @Test
-    void testColumn() {
-        Object[] expectedIDs = new Object[] { 1, 2, 3 };
-        Object[] expectedNames = new Object[] { "Ngoc", "Ethan", "Doug" };
-        // Called by index case
-        assertArrayEquals(table.column(0), expectedIDs);
-        // Called by name case
-        assertArrayEquals(table.column("Name"), expectedNames);
-        // Called by invalid name case
-        assertThrows(NoSuchElementException.class, () -> table.column(
-            "Sucks to suck"));
+    void testColumnValidIndex() {
+        assertArrayEquals(table2.column(0), new Object[] { 1, 2, 3 });
+        assertArrayEquals(table2.column(1), new Object[] { "Ethan", "Ngoc",
+            "Doug" });
     }
 
 
     /**
-     * Tests entriesWhere()
+     * Tests that column(String) returns the specified column of values
+     */
+    @Test
+    void testColumnValidName() {
+        assertArrayEquals(table2.column("ID"), new Object[] { 1, 2, 3 });
+        assertArrayEquals(table2.column("Name"), new Object[] { "Ethan", "Ngoc",
+            "Doug" });
+    }
+
+
+    /**
+     * Any index passed that is less than 0 or greater than Table.columnCount()
+     * - 1 should return IndexOutOfBoundsException.
+     */
+    @Test
+    void testColumnInvalidIndices() {
+        assertThrows(IndexOutOfBoundsException.class, () -> table2.column(-1));
+        assertThrows(IndexOutOfBoundsException.class, () -> table2.column(2));
+    }
+
+
+    /**
+     * If a non-existent column name is passed, throws Exception
+     */
+    @Test
+    void testColumnInvalidName() {
+        assertThrows(Exception.class, () -> table2.column("Dees"));
+    }
+
+
+    /**
+     * If table is empty, column() throws Exception
+     */
+    @Test
+    void testColumnEmptyTable() {
+        assertThrows(Exception.class, () -> table.column(0));
+    }
+
+
+    /**
+     * If column(null) is called, throws Exception
+     */
+    @Test
+    void testColumnNullName() {
+        assertThrows(Exception.class, () -> table2.column(null));
+    }
+
+
+    /**
+     * entriesWhere is the most error-prone method in Table, so there will be
+     * many, many tests. The following numbers will be used to indicate which
+     * overload of the method will be tested in any particular test:
      * 
-     * - Case where single condition is used to retrive rows
-     * - Case where multiple conditions are used to retrieve rows
-     * - Case where table is empty
-     * - Case where column index is above bounds
-     * - Case where column index is below bounds
-     * - Case where column name doesn't exist
-     * - Case where column name is null
-     * - Case where no row satify the condition
-     * - Case where rows satisfy some of the criteria
-     * - Case where primitive type is compared to non-primitive
-     * - Case where column array is empty
-     * - Case where value array is empty
-     * - Case where passed arrays are of unequal size
-     * - Case where returned table is modified (Ensure this doesn't affect
-     * original table)
+     * 0 - for single condition methods
+     * 1 - for multiple condition methods
+     * 2 - for single string condition methods
+     * 3 - for multiple string condition methods
+     * 4 - for single index condition methods
+     * 5 - for multiple index condition methods
+     */
+
+    /**
+     * Tests entriesWhere in normal case and also tests for immutability
      */
     @Test
     void testEntriesWhere() {
-        // Column specified by index case
-        Table results = table.entriesWhere(1, "Ngoc");
-        assertEquals(1, results.rowCount());
-        assertEquals(results.valueAt(0, 1), "Ngoc");
 
-        // Column specified by name case
-        results = table.entriesWhere("Name", "Ethan");
-        assertEquals(1, results.rowCount());
-        assertEquals(results.valueAt(0, 1), "Ethan");
+    }
 
-        // Invalid column name is passed
-        assertThrows(NoSuchElementException.class, () -> table.entriesWhere(
-            "InvalidColumn", "Ngoc"));
+
+    /**
+     * Tests that empty table is returned if table is empty (0, 1)
+     */
+    @Test
+    void testEntriesWhereEmptyTable() {
+        assertEquals(table1.entriesWhere(0, 1).rowCount(), 0);
+        assertEquals(table1.entriesWhere("ID", 1).rowCount(), 0);
+
+        assertEquals(table1.entriesWhere(new int[] { 0, 1 }, new Object[] { 0,
+            "Ethan" }).rowCount(), 0);
+        assertEquals(table1.entriesWhere(validColumnNames, new Object[] { 0,
+            "Ethan" }).rowCount(), 0);
+    }
+
+
+    /**
+     * Tests that empty table is returned if no matches are found (0, 1)
+     */
+    @Test
+    void testEntriesWhereNoMatches() {
+        assertEquals(table2.entriesWhere(0, 4).rowCount(), 0);
+        assertEquals(table2.entriesWhere("ID", 4).rowCount(), 0);
+
+        assertEquals(table2.entriesWhere(new int[] { 0, 1 }, new Object[] { 4,
+            "Emison" }).rowCount(), 0);
+        assertEquals(table2.entriesWhere(validColumnNames, new Object[] { 4,
+            "Emison" }).rowCount(), 0);
+    }
+
+
+    /**
+     * Tests that Exception is throw if column parameter has null values passed
+     * (2, 3)
+     */
+    @Test
+    void testEntriesWhereNull() {
+        assertThrows(Exception.class, () -> table2.entriesWhere(null, 0));
+        assertThrows(Exception.class, () -> table2.entriesWhere(new String[] {
+            null, "Name" }, new Object[] { 0, "Ethan" }));
+
+    }
+
+
+    /**
+     * Tests that method returns rows where null equality is assessed (0, 1)
+     */
+    @Test
+    void testEntriesWhereNullCondition() {
+        Table table3 = new Table(validColumnNames);
+        table3.add(new Object[] { 0, null });
+
+        assertArrayEquals(table3.entriesWhere(1, null).row(0), new Object[] { 0,
+            null });
+        assertArrayEquals(table3.entriesWhere("Name", null).row(0),
+            new Object[] { 0, null });
+
+        assertArrayEquals(table3.entriesWhere(new int[] { 0, 1 }, new Object[] {
+            0, null }).row(0), new Object[] { 0, null });
+        assertArrayEquals(table3.entriesWhere(validColumnNames, new Object[] {
+            0, null }).row(0), new Object[] { 0, null });
+
+    }
+
+
+    /**
+     * Tests that method throws exception if array lengths are mismatched. Tests
+     * case where column array is shorter, and case where values array is
+     * shorter. (1)
+     */
+    @Test
+    void testEntriesWhereArrayMismatch() {
+        assertThrows(Exception.class, () -> table2.entriesWhere(new int[] { 0,
+            1 }, new Object[] { 0 }));
+        assertThrows(Exception.class, () -> table2.entriesWhere(
+            validColumnNames, new Object[] { 0 }));
+
+        assertThrows(Exception.class, () -> table2.entriesWhere(new int[] { 0 },
+            new Object[] { 0, "Ethan" }));
+        assertThrows(Exception.class, () -> table2.entriesWhere(new String[] {
+            "ID" }, new Object[] { 0, "Ethan" }));
+    }
+
+
+    /**
+     * Tests that method returns all entries if two empty arrays are passed.
+     * (Makes sense, if there are no conditions, all rows should return) (1)
+     */
+    @Test
+    void testEntriesWhereEmptyArray() {
+        assertEquals(table2.entriesWhere(new int[0], new String[0]).rowCount(),
+            3);
+        assertEquals(table2.entriesWhere(new String[0], new String[0])
+            .rowCount(), 3);
+    }
+
+
+    /**
+     * Tests that method throws exception of out of bounds column indices are
+     * passed. Tests cases where indices are below 0 and above table's last
+     * column index (4, 5)
+     */
+    @Test
+    void testEntriesWhereColumnIndicesOutOfBounds() {
+        assertThrows(Exception.class, () -> table2.entriesWhere(3, "what"));
+        assertThrows(Exception.class, () -> table2.entriesWhere(-1, "what"));
+        assertThrows(Exception.class, () -> table2.entriesWhere(new int[] { 0,
+            3 }, new Object[] { 0, "what" }));
+        assertThrows(Exception.class, () -> table2.entriesWhere(new int[] { -1,
+            0 }, new Object[] { 0, "what" }));
+    }
+
+
+    /**
+     * Tests that a row is not returned if it only partially meets conditions
+     * (1)
+     */
+    @Test
+    void testEntriesWherePartiallyMeets() {
+        assertEquals(table2.entriesWhere(validColumnNames, new Object[] { 0,
+            "Ngoc" }).rowCount(), 0);
+        assertEquals(table2.entriesWhere(new int[] { 0, 1 }, new Object[] { 0,
+            "Ngoc" }).rowCount(), 0);
+    }
+
+
+    /**
+     * Tests that Exception is throw if invalid column name is passed (2, 3)
+     */
+    @Test
+    void testEntriesWhereInvalidColName() {
+        assertThrows(Exception.class, () -> table2.entriesWhere("Dees", 0));
+        assertThrows(Exception.class, () -> table2.entriesWhere(new String[] {
+            "ID", "Dees" }, new Object[] { 0, 0 }));
+    }
+
+
+    /**
+     * Tests that exception is throw if null column names are passed (2, 3)
+     */
+    @Test
+    void testEntriesWhereNullColName() {
+        assertThrows(Exception.class, () -> table2.entriesWhere(null, 0));
+        assertThrows(Exception.class, () -> table2.entriesWhere(new String[] {
+            "ID", null }, new Object[] { 0, 0 }));
+    }
+
+
+    /**
+     * Tests that order in new table is preserved (0, 1)
+     */
+    @Test
+    void testEntriesWherePreservesOrder() {
+        Table table3 = new Table(validColumnNames);
+        table3.add(new Object[] { 1, "Ethan" });
+        table3.add(new Object[] { 2, "Ngoc" });
+        table3.add(new Object[] { 3, "Ethan" });
+
+        Table newTable = table3.entriesWhere(1, "Ethan");
+
+        assertArrayEquals(newTable.row(0), new Object[] { 1, "Ethan" });
+        assertArrayEquals(newTable.row(1), new Object[] { 3, "Ethan" });
     }
 
 
