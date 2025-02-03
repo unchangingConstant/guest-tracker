@@ -5,7 +5,9 @@ import java.util.Comparator;
 import java.util.Iterator;
 
 /**
- * Ordered list whose sort order can be modified
+ * Ordered list whose sort order can be modified. It encapsulates an ArrayList.
+ * Any method used to modify the contents of the encapsulated ArrayList should
+ * make sure the list's order is maintained.
  * 
  * TODO FINISH!!!!
  * 
@@ -57,17 +59,22 @@ public class SortModeList<T> implements Iterable<T> {
      *            The item you want to add in order
      */
     public void add(T item) {
+        // If there is no comparator, adds item to the list at the end.
         if (comparator == null) {
             list.add(item);
             return;
         }
 
+        // Otherwise, uses insertion sort to add the item to the list.
         for (int i = 0; i < size(); i++) {
             if (comparator.compare(item, list.get(i)) < 0) {
                 list.add(i, item);
                 return;
             }
         }
+
+        // If it iterates through all items above and no place for the new item
+        // has been found, adds it to the end of the list.
         list.add(item);
     }
 
@@ -176,7 +183,8 @@ public class SortModeList<T> implements Iterable<T> {
 
 
     /**
-     * Used to instantiate a SortedList with a given array.
+     * Fills this list with the given array of items using this class's add()
+     * method, which adds everything in sorted order.
      * 
      * @param arr
      *            The array you'd like to fill the SortModeList with
