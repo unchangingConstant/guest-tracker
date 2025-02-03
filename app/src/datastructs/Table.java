@@ -321,7 +321,7 @@ public class Table implements Iterable<Object[]> {
                 return;
             }
         }
-        throw new NoSuchElementException("Row not found");
+        throw new NoSuchElementException("Row not found in table");
     }
 
 

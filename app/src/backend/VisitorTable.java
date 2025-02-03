@@ -4,7 +4,11 @@ import java.util.Comparator;
 import datastructs.Table;
 
 /**
- * Table that stores visitors. No two visitors may have the same visitor ID.
+ * Table that stores visitors. This table follows these rules:
+ * 
+ * - No visitor may have a visitor ID lower than 10001 or greater than 99999
+ * - No two visitors may have the same visitor ID.
+ * - Each visitor must have a first and last name (not null or empty string)
  * 
  * @author Ethan Begley
  * @version 12/9/2024
@@ -15,27 +19,38 @@ public class VisitorTable extends Table {
      * Creates a VisitorTable
      */
     public VisitorTable() {
+        // Calls super constructor with fixed column names and custom
+        // comparator. This table is sorted by visitorID.
         super(new String[] { "visitorID", "firstName", "middleName",
             "lastName" }, new CompareVisitors());
     }
 
 
     /**
-     * TODO comment
+     * Adds an entry in sorted order to the table. Ensures entry follows all
+     * table rules. This method is best for filling a table from a pre-existing
+     * table, where each visitor already has a preset visitorID.
      * 
      * @param fullName
+     *            The name of the visitor
      * @param visitorID
+     *            The visitor's unique ID
      */
     public void add(String[] fullName, int visitorID) {
+        // Checks that the name array is of proper length, 3.
         if (fullName.length != 3) {
             throw new IllegalArgumentException(
                 "String arr fullName must have length == 3");
         }
-        if (visitorID < 10001) {
+        // Makes sure entry has a valid ID
+        if (visitorID < 10001 || visitorID > 99999) {
             throw new IllegalArgumentException(
-                "visitorID must be at least 10001");
+                "visitorID must be at least 10001 and no more than 99999");
         }
 
+        // Optimize this? There has to be a better way given that the list is
+        // ordered
+        // Checks that visitor's ID doesn't already exist in the table
         for (Object currID : rows) {
             if ((int)currID == visitorID) {
                 throw new IllegalStateException(
@@ -44,14 +59,15 @@ public class VisitorTable extends Table {
             }
         }
 
-        rows.add(new Object[] { visitorID, fullName[0], fullName[1],
+        // Invokes super add method to add the row to the table.
+        super.add(new Object[] { visitorID, fullName[0], fullName[1],
             fullName[2] });
     }
 
 
     /**
-     * Adds an entry to the table in order. This method ensures the rules
-     * outlined in the class description are met before adding an entry.
+     * Adds an entry to the table in order. This method ensures the new entry
+     * follows all table rules and generates an ID for the new visitor.
      * 
      * @param fullName
      *            The name of the visitor you want to add
@@ -62,6 +78,7 @@ public class VisitorTable extends Table {
                 "String arr fullName must have length == 3");
         }
 
+        // Creates new row with a generated ID.
         Object[] visitor = new Object[] { generateVisitorID(), fullName[0],
             fullName[1], fullName[2] };
         super.add(visitor);
@@ -96,6 +113,12 @@ public class VisitorTable extends Table {
             }
             currID++;
         }
+
+        if (currID > 99999) {
+            throw new IllegalStateException(
+                "No ID can be generated for this table. Max table capacity has been reached");
+        }
+
         return currID;
 
     }

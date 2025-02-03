@@ -11,6 +11,9 @@ import org.junit.jupiter.api.Test;
 
 /**
  * Tests all functions for the table class
+ * 
+ * @author Ethan Begley
+ * @version 1/31/2025
  */
 class TableTest {
 
