@@ -11,9 +11,14 @@ import java.util.NoSuchElementException;
  * Make sure all Objects stored in a table are IMMUTABLE
  * Table is ordered by first field by default
  * 
+ * 
+ * TODO Add test case that ensures subclasses of table will return a table of
+ * the subclass's type when using entriesWhere()
  * TODO check for dumb stuff
  * TODO check that ALL methods have tests
  * TODO Consider creating more scalable frame work for handling errors
+ * TODO Very far in the backlog, but consider creating a TableSet class to
+ * improve get by ID operations
  */
 public class Table implements Iterable<Object[]> {
 
@@ -50,6 +55,8 @@ public class Table implements Iterable<Object[]> {
             }
         }
 
+        // Creates a new SortModeList. Each index will represent an entry, each
+        // entry is represented by an object array
         this.rows = new SortModeList<Object[]>(comparator);
         this.columnNames = new HashMap<>();
 
@@ -87,13 +94,7 @@ public class Table implements Iterable<Object[]> {
      * @return The row at the index
      */
     public Object[] row(int row) {
-
-        Object[] rowCopy = new Object[columnCount()];
-        Object[] ogRow = rows.get(row);
-        for (int i = 0; i < columnCount(); i++) {
-            rowCopy[i] = ogRow[i];
-        }
-        return rowCopy;
+        return deepCopy(rows.get(row));
     }
 
 
@@ -331,6 +332,9 @@ public class Table implements Iterable<Object[]> {
      * 
      * - row's # of columns == table's number of columns
      * 
+     * Additionally, creates a deepCopy of the passed row to add to the table to
+     * avoid unintended changes.
+     * 
      * @param row
      *            The row you want to add
      * @throws IllegalArgumentException
@@ -345,8 +349,7 @@ public class Table implements Iterable<Object[]> {
                 "Row columnCount and table columnCount differ. Row: "
                     + row.length + " columns, Table: " + columnCount());
         }
-        rows.add(row);
-
+        rows.add(deepCopy(row));
     }
 
 
@@ -404,6 +407,26 @@ public class Table implements Iterable<Object[]> {
      */
     public Iterator<Object[]> iterator() {
         return rows.iterator();
+    }
+
+
+    /**
+     * Creates a deep copy of the passed object array
+     * 
+     * @param obj
+     *            The obj arr you want to copy
+     * @return A deep copy of the obj arr
+     */
+    private Object[] deepCopy(Object[] obj) {
+
+        Object[] rowCopy = new Object[obj.length];
+        Object[] ogRow = obj;
+
+        for (int i = 0; i < columnCount(); i++) {
+            rowCopy[i] = ogRow[i];
+        }
+
+        return rowCopy;
     }
 
 }

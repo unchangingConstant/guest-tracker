@@ -7,6 +7,7 @@ import java.awt.Panel;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import modelviewtools.DataDelegate;
+import modelviewtools.DataView;
 
 /**
  * This will be added to the OngoingVisitsPanel to display one ongoing visit
@@ -14,10 +15,12 @@ import modelviewtools.DataDelegate;
  * @author Ethan Begley
  * @version 1/10/2025
  */
-public class OngoingVisit extends Panel {
+public class OngoingVisit extends DataView {
 
     private EndButton endButton; // Button that ends the visit
     private DataDelegate model; // Database the button will access
+    // This Panel will hold all the sub-components for this view
+    private Panel ongoingVisit;
 
     /**
      * These contraints will be used throughout the class to arrange the

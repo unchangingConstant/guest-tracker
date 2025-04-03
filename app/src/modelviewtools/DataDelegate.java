@@ -23,7 +23,7 @@ public abstract class DataDelegate {
 
     /**
      * Base constructor does nothing. Most functionality is defined by the
-     * client. This class serves mostly as a guide and structure.
+     * user. This class serves mostly as a guide and structure.
      */
     public DataDelegate() {
     }
@@ -36,7 +36,7 @@ public abstract class DataDelegate {
      * @param signal
      *            The Signal you want to send the models.
      */
-    protected void signalDataViews(Signal signal) {
+    public void signalDataViews(Signal signal) {
         for (DataView dataView : signalList) {
             dataView.signal(signal);
         }
@@ -50,7 +50,7 @@ public abstract class DataDelegate {
      * @param dataView
      *            DataView you want signaled when signalViews() is called.
      */
-    protected void addView(DataView dataView) {
+    public void addView(DataView dataView) {
         signalList.add(dataView);
     }
 
@@ -61,7 +61,7 @@ public abstract class DataDelegate {
      * @param dataView
      *            DataView you want taken off the signalList
      */
-    protected void removeView(DataView dataView) {
+    public void removeView(DataView dataView) {
         signalList.remove(dataView);
     }
 

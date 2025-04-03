@@ -1,16 +1,15 @@
 package app;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.time.LocalTime;
-import java.util.ArrayList;
-import backend.Visit;
-import backend.Visit.VisitKey;
 import backend.VisitTable;
 import backend.VisitorTable;
-import dataviews.OngoingVisit;
+import datastructs.Table;
 import modelviewtools.DataDelegate;
+import modelviewtools.Signal;
 
+/**
+ * TODO Ensure the DataManager only sends signals upon SUCCESSFUL changes!!!
+ */
 public class DataManager extends DataDelegate {
 
     /**
@@ -27,46 +26,34 @@ public class DataManager extends DataDelegate {
     private VisitorTable visitors; // A table of all visitors
     private VisitTable visits; // A table of all visits
 
+    // TODO Add constructor that takes CSV file
+
     /**
      * Initializes the Database with a given CSV file
      */
     public DataManager() {
+        this.visitors = new VisitorTable();
+        this.visits = new VisitTable(visitors);
     }
 
 
     /**
-     * TODO decide what the return type will be
-     * 
-     * @return
+     * Returns a Table with all currently ongoing visits
      */
-    public OngoingVisit[] getOngoingVisits() {
-
-        ArrayList<OngoingVisit> ongoingVisits = new ArrayList<OngoingVisit>();
-        
-        for (Object[] visit: visits.entriesWhere(new String[] {"visitorID", } ))
-        
-    }
-
-
-    public Visitor getVisitor(int visitorID) {
-        return table.entry(visitorID);
-    }
-
-
-    public Visit getVisit(VisitKey key) {
-        return (Visit)((VisitTable)table.entry(key.visitorID()).field(
-            "history")).entry(key);
+    public Table getOngoingVisits() {
+        return visits.entriesWhere("startTime", null);
     }
 
 
     /**
-     * Adds a listener that will be notified as to this Delegate's actions
+     * Returns an Object array representing an entry in the visitor table, said
+     * entry representing the visitor with the given visitorID
      * 
-     * @param listener
-     *            Listener to be notified by this Delegate
+     * @param visitorID
+     * @return The visitor with the given visitorID
      */
-    public void addListener(ActionListener listener) {
-        listeners.add(listener);
+    public Object[] getVisitor(int visitorID) {
+        return visitors.row(visitorID);
     }
 
 
@@ -84,61 +71,33 @@ public class DataManager extends DataDelegate {
         int visitorID,
         LocalTime startTime,
         LocalTime endTime) {
-
-        VisitTable visitorVisits = (VisitTable)table.entry(visitorID).field(
-            "history");
-        Visit newVisit = new Visit(visitorID, startTime, endTime);
-
-        visitorVisits.add(newVisit);
-
-        // Notifies listeners of change in database
-        if (newVisit.isOngoing()) {
-            signalViews(new ActionEvent(this, visitorID, "addedOngoing"));
-        }
-        else {
-            signalViews(new ActionEvent(this, visitorID, "addedVisit"));
-        }
-
-    }
-
-
-    public void endVisit(int visitorID) throws Exception {
-
-        Visitor visitor = table.entry(visitorID);
-
-        // If visitor not visiting, throw exception
-        if (!visitor.isVisiting()) {
-            throw new Exception("Student has no visit to end");
-        }
-
-        // Fetches current ongoing visit and visitor history
-        VisitTable visitorHistory = (VisitTable)visitor.field("history");
-        Visit ongoingVisit = visitorHistory.entry(0);
-
-        // Makes new visit with old startTime and endTime as the currentTime
-        LocalTime currentTime = LocalTime.now();
-        Visit closedVisit = new Visit(visitorID, (LocalTime)ongoingVisit.field(
-            "startTime"), currentTime);
-
-        // Removes ongoing visit, replaces it with a closed version
-        visitorHistory.remove(0);
-        visitorHistory.add(closedVisit);
-
-        signalViews(new ActionEvent(this, visitorID, "endedOngoing"));
-
+        visits.add(visitorID, startTime, endTime);
+        signalDataViews(new Signal(ADDED_VISIT));
     }
 
 
     /**
-     * Notifies all ActionListeners that an action has occurred
+     * Ends a given visitor's ongoingVisit
      * 
-     * @param e
-     *            The ActionEvent that has occurred
+     * @param visitorID
+     *            The visitor whose ongoing visit you want to end
+     * @throws Exception
+     *             TODO Decide what kind of exception this will throw
      */
-    private void signalDataViews(ActionEvent e) {
-        for (ActionListener listener : listeners) {
-            listener.actionPerformed(e);
-        }
-    }
+    public void endVisit(int visitorID) throws Exception {
+        // Fetches the visitor's current ongoing visit
+        String[] checkedColumns = new String[] { "visitorID", "endTime" };
+        Object[] criteria = new Object[] { visitorID, null };
+        Object[] ongoingVisit = visits.entriesWhere(checkedColumns, criteria)
+            .row(0);
+        // Removes the ongoingVisit
+        visits.remove(ongoingVisit);
+        // Adds an endtime to the ongoingVisit
+        ongoingVisit[2] = LocalTime.now();
+        // Adds the ongoingVisit with the endTime back into the table
+        visits.add(ongoingVisit);
 
+        signalDataViews(new Signal(ENDED_VISIT));
+
+    }
 }

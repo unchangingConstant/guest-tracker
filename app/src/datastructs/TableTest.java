@@ -217,6 +217,19 @@ class TableTest {
 
 
     /**
+     * Tests that when a row is added to the table, any changes made to the
+     * passed object doesn't impact the entry in the table
+     */
+    @Test
+    void testAddDeepCopy() {
+        Object[] row = new Object[] { 1, "Ethan" };
+        table1.add(row);
+        row[0] = 99;
+        assertArrayEquals(new Object[] { 1, "Ethan" }, table1.row(0));
+    }
+
+
+    /**
      * Tests that row returns a deep copy array. (thought the objects in the
      * array don't necessarily have to be deep copies). This test also makes
      * sure that cases index = 0 and index = Table.columnCount() - 1 works

@@ -10,6 +10,8 @@ import datastructs.Table;
  * - No two visitors may have the same visitor ID.
  * - Each visitor must have a first and last name (not null or empty string)
  * 
+ * TODO Create unit tests for row by ID
+ * 
  * @author Ethan Begley
  * @version 12/9/2024
  */
@@ -27,9 +29,22 @@ public class VisitorTable extends Table {
 
 
     /**
+     * This fetches a visitor from the visitor table by ID
+     * 
+     * @return The visitor with the given visitorID. If visitor not found,
+     *         returns null
+     */
+    public Object[] row(int visitorID) {
+        // Looks for visitor with the given visitorID
+        // Will throw IndexOutOfBounds exception if visitor not found
+        return entriesWhere("visitorID", visitorID).row(0);
+    }
+
+
+    /**
      * Adds an entry in sorted order to the table. Ensures entry follows all
      * table rules. This method is best for filling a table from a pre-existing
-     * table, where each visitor already has a preset visitorID.
+     * table, where the added visitors already have preset visitorID's.
      * 
      * @param fullName
      *            The name of the visitor
