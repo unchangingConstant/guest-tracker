@@ -6,6 +6,13 @@ An attendance tracking program request by Kumon Springfield of Huntsman Square.
 
 This application will enable the Kumon attendance tracking flow. Additionally, it will store the data and make it available via google drive.
 
+As a Kumon center owner, I would like to track the in-times and out-times of my students.
+As a Kumon front-desk worker, I would like to log students' attendance by simply having them scan the QR code on their folder when they come in and out.
+As a Kumon center owner, I would like to easily access records of my students' attendance from any device. Preferably from a platform I already use, such as Google Drive.
+As a Kumon center owner, I would like this application to work in the event that there is no internet.
+As a Kumon center owner, I would like data collected from this application to be reliable and reflect current records of student attendance.
+As a Kumon center owner, I want to ensure employees with access to the front-desk computer cannot tamper with student records.
+
 ## Getting Started
 
 ### Dependencies
